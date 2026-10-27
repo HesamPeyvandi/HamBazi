@@ -1,0 +1,29 @@
+/*
+ * ===== BRAND FONT — the ONLY place the site font is defined =====
+ * To replace the font, follow docs/FONT.md (about 3 steps):
+ *   1. Put the new font files in public/fonts/brand/
+ *   2. Edit the @font-face block(s) below (file names + weights)
+ *   3. Optionally change --font-brand-name
+ * Nothing else in the project mentions a concrete font.
+ */
+
+/* Option A (current): one variable font file covering all weights. */
+@font-face {
+  font-family: "BrandFont";
+  src: url("/fonts/brand/brand-variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Option B: separate static files — delete Option A above and use blocks like these:
+@font-face { font-family: "BrandFont"; src: url("/fonts/brand/MyFont-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "BrandFont"; src: url("/fonts/brand/MyFont-Medium.woff2")  format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "BrandFont"; src: url("/fonts/brand/MyFont-Bold.woff2")    format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "BrandFont"; src: url("/fonts/brand/MyFont-ExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+*/
+
+:root {
+  /* Fallbacks are used while the font loads or if a glyph is missing. */
+  --font-brand-stack: "BrandFont", ui-sans-serif, system-ui, Tahoma, sans-serif;
+}
