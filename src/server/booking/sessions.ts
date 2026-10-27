@@ -6,6 +6,7 @@ import { E } from './errors';
 import { acquireSlot, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
+import { recordReliability } from '@/server/trust/reliability';
 
 export interface CreateSessionInput {
   slotId: string; targetCount: number; minToConfirm: number; pricePerParticipant: number;
@@ -96,6 +97,7 @@ export async function leaveSession(userId: string, sessionId: string, now = new 
     else {
       pct = playerRefundPercent(res, slot.startsAt, now);
       for (const i of await succeededIntents(tx, res.id, p.id)) await refundIntent(tx, i, pct, 'participant_left');
+      if (pct < 100) await recordReliability(tx, userId, res.id, 'late_cancel');
     }
     await tx.update(schema.sessionParticipants).set({ status: 'left', holdExpiresAt: null }).where(eq(schema.sessionParticipants.id, p.id));
     const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(schema.sessionParticipants).where(and(eq(schema.sessionParticipants.sessionId, s.id), eq(schema.sessionParticipants.status, 'confirmed')));

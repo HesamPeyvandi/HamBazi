@@ -54,7 +54,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
         <h2 id="players-t" className="section-title mb-3">بازیکنان</h2>
         <ul className="divide-y divide-line">{d.participants.map((p) => (
           <li key={p.userId} className="flex items-center gap-3 py-3"><Avatar src={p.avatar} name={p.name || 'کاربر'} size={40} />
-            <div className="min-w-0"><p className="font-bold">{p.name || 'کاربر'}{p.isHost && <span className="pill pill-green ms-2">میزبان</span>}</p><p className="text-xs text-ink-500">OVR {toFa(p.ovr)}</p></div>
+            <div className="min-w-0"><p className="font-bold"><Link href={`/players/${p.userId}`} className="hover:text-brand-600">{p.name || 'کاربر'}</Link>{p.isHost && <span className="pill pill-green ms-2">میزبان</span>}</p><p className="text-xs text-ink-500">OVR {toFa(p.ovr)}</p></div>
             {p.payment !== undefined && <span className="pill pill-info ms-auto">{PAY_STATUS[p.payment ?? 'created'] ?? '—'}</span>}</li>))}</ul>
       </section>
       <div className="mt-5 space-y-3">
@@ -73,7 +73,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
             <button className="btn btn-outline w-full">ذخیرهٔ تغییرات</button></form>}
           {active && hostRes[0] && <form action={cancelReservationAction.bind(null, hostRes[0].id)} className="mt-4"><p className="help mb-2">با لغو سانس، سهم بقیهٔ بازیکنان کامل و سهم شما طبق سیاست لغو بازگردانده می‌شود (شبیه‌سازی‌شده).</p><button className="btn btn-danger w-full">لغو کل سانس</button></form>}
         </section>)}
-      <p className="mt-6 flex items-center gap-2 text-sm text-ink-500"><ShieldCheck className="h-4 w-4" aria-hidden /><Link href="/cancellation-policy" className="font-bold text-brand-600">سیاست لغو و بازگشت وجه</Link></p>
+      <p className="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink-500"><ShieldCheck className="h-4 w-4" aria-hidden /><Link href="/cancellation-policy" className="font-bold text-brand-600">سیاست لغو و بازگشت وجه</Link><Link href={`/report?type=session&id=${s.id}`}>گزارش این سانس</Link></p>
     </div>
   );
 }

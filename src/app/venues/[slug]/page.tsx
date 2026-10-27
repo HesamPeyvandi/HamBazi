@@ -62,6 +62,7 @@ export default async function VenuePage({ params, searchParams }: P) {
             <p className="text-2xl font-extrabold text-brand-700">از {formatToman(fromPrice)}</p>
             <p className="help">قیمت نهایی بسته به روز و ساعت متفاوت است.</p></div>
           <a href="#slots" className="btn btn-primary"><CalendarDays className="h-5 w-5" aria-hidden />مشاهده سانس‌های موجود</a>
+          <Link href={`/report?type=venue&id=${v.id}`} className="text-center text-xs text-ink-500 hover:text-brand-600">گزارش مشکل این سالن</Link>
         </aside>
       </div>
 

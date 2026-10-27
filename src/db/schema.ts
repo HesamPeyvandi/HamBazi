@@ -162,7 +162,8 @@ export const venueReviews = pgTable('venue_reviews', {
   id: id(),
   venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
-  sessionId: uuid('session_id'), // FK to open_sessions added in P3
+  sessionId: uuid('session_id'),
+  reservationId: uuid('reservation_id'), // the game being reviewed (full or open session); unique per (reservation, user)
   rating: integer('rating').notNull(),
   quality: jsonb('quality').$type<Record<string, number>>().notNull().default({}),
   comment: text('comment').notNull().default(''),
@@ -170,6 +171,7 @@ export const venueReviews = pgTable('venue_reviews', {
 }, (t) => [
   check('venue_reviews_rating', sql`${t.rating} BETWEEN 1 AND 5`),
   index('venue_reviews_venue_idx').on(t.venueId, t.createdAt),
+  uniqueIndex('venue_reviews_one_per_game').on(t.reservationId, t.userId).where(sql`${t.reservationId} IS NOT NULL`),
 ]);
 
 /* ---------- player skill (self-assessment in P1; peer ratings in P3) ---------- */
@@ -256,6 +258,8 @@ export const reservations = pgTable('reservations', {
   holdExpiresAt: timestamp('hold_expires_at', { withTimezone: true }),
   cancelReason: text('cancel_reason'),
   cancelledBy: text('cancelled_by'),                  // player | venue | system | admin
+  attendance: text('attendance'),                     // full-mode host only: attended | no_show (sessions use participant status)
+  attendanceMarkedAt: timestamp('attendance_marked_at', { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   version: integer('version').notNull().default(0),
@@ -380,3 +384,59 @@ export const jobRuns = pgTable('job_runs', {
   finishedAt: timestamp('finished_at', { withTimezone: true }),
   result: jsonb('result'),
 });
+
+/* ---------- Phase 3: trust (attendance, reliability, peer ratings, reports) ---------- */
+/** Reliability is DERIVED from these events (recomputable). One event per (user, game, type). */
+export const reliabilityEvents = pgTable('reliability_events', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  reservationId: uuid('reservation_id').notNull().references(() => reservations.id, { onDelete: 'restrict' }),
+  type: text('type').notNull(), // attended | no_show | late_cancel
+  delta: integer('delta').notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('reliability_one_per_game').on(t.userId, t.reservationId, t.type),
+  index('reliability_user_idx').on(t.userId, t.createdAt),
+  check('reliability_type', sql`${t.type} IN ('attended','no_show','late_cancel')`),
+]);
+
+export const venueReliabilityEvents = pgTable('venue_reliability_events', {
+  id: id(),
+  venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'restrict' }),
+  reservationId: uuid('reservation_id').notNull().references(() => reservations.id, { onDelete: 'restrict' }),
+  type: text('type').notNull(), // cancelled_by_venue
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex('venue_reliability_one').on(t.venueId, t.reservationId, t.type)]);
+
+export const playerReviews = pgTable('player_reviews', {
+  id: id(),
+  sessionId: uuid('session_id').notNull().references(() => openSessions.id, { onDelete: 'restrict' }),
+  raterId: uuid('rater_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  targetId: uuid('target_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  sportId: uuid('sport_id').notNull().references(() => sports.id),
+  scores: jsonb('scores').$type<Record<string, number>>().notNull(), // category -> 1..10
+  comment: text('comment').notNull().default(''),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('player_reviews_unique').on(t.sessionId, t.raterId, t.targetId),
+  index('player_reviews_target_idx').on(t.targetId, t.createdAt),
+  check('player_reviews_not_self', sql`${t.raterId} <> ${t.targetId}`),
+]);
+
+export const reports = pgTable('reports', {
+  id: id(),
+  reporterId: uuid('reporter_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  targetType: text('target_type').notNull(), // user | venue | session
+  targetId: uuid('target_id').notNull(),
+  reason: text('reason').notNull(),
+  details: text('details').notNull().default(''),
+  status: text('status').notNull().default('open'), // open | resolved | dismissed
+  resolution: text('resolution').notNull().default(''),
+  resolvedBy: uuid('resolved_by').references(() => users.id),
+  createdAt: createdAt(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+}, (t) => [
+  index('reports_status_idx').on(t.status, t.createdAt),
+  check('reports_target_type', sql`${t.targetType} IN ('user','venue','session')`),
+  check('reports_status', sql`${t.status} IN ('open','resolved','dismissed')`),
+]);

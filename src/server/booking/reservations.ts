@@ -7,6 +7,7 @@ import { acquireSlot, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { cancelSessionInternal, lockSlot, lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
 import { calcFee } from './money';
+import { recordReliability } from '@/server/trust/reliability';
 
 const bump = sql`${schema.reservations.version} + 1`;
 
@@ -40,7 +41,9 @@ export async function cancelReservationByPlayer(userId: string, reservationId: s
       if (!locked || ['cancelled', 'expired', 'completed'].includes(locked.status)) throw E.badState();
       const [slot] = await tx.select().from(schema.timeSlots).where(eq(schema.timeSlots.id, pre.slotId));
       const pct = playerRefundPercent(pre, slot.startsAt, now);
+      const [hp] = await tx.select().from(schema.sessionParticipants).where(and(eq(schema.sessionParticipants.sessionId, locked.id), eq(schema.sessionParticipants.isHost, true)));
       await cancelSessionInternal(tx, locked, { by: 'player', reason: 'host_cancelled', status: 'cancelled', hostRefundPercent: pct });
+      if (hp?.status === 'confirmed' && pct < 100) await recordReliability(tx, userId, pre.id, 'late_cancel');
       return { refundPercent: pct };
     }
     await lockSlot(tx, pre.slotId);
@@ -49,6 +52,7 @@ export async function cancelReservationByPlayer(userId: string, reservationId: s
     const [slot] = await tx.select().from(schema.timeSlots).where(eq(schema.timeSlots.id, r.slotId));
     const pct = r.status === 'confirmed' ? playerRefundPercent(r, slot.startsAt, now) : 0;
     await finishCancel(tx, r, 'player', 'player_cancelled', pct);
+    if (r.status === 'confirmed' && pct < 100) await recordReliability(tx, userId, r.id, 'late_cancel');
     await notifyManagers(tx, r.venueId, 'reservation_cancelled', 'رزرو توسط بازیکن لغو شد', '', '/owner/reservations');
     return { refundPercent: pct };
   });
@@ -74,6 +78,7 @@ export async function cancelReservationByVenue(actor: { id: string; role: string
       await finishCancel(tx, r, actor.role === 'admin' ? 'admin' : 'venue', 'venue_cancelled', 100);
       await notify(tx, r.hostUserId, 'reservation_cancelled', 'رزرو توسط سالن لغو شد', 'مبلغ پرداختی (شبیه‌سازی‌شده) به‌طور کامل بازگردانده شد.', `/reservations/${r.id}`);
     }
+    await tx.insert(schema.venueReliabilityEvents).values({ venueId: pre.venueId, reservationId: pre.id, type: 'cancelled_by_venue' }).onConflictDoNothing();
     await audit(actor.id, 'reservation.venue_cancel', 'reservation', reservationId, {});
   });
 }
