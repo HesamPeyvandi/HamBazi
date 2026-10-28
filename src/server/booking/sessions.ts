@@ -5,11 +5,12 @@ import { cancelOpenIntents, notify, refundIntent, succeededIntents, type Tx } fr
 import { E } from './errors';
 import { acquireSlot, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
+import { splitShare } from './money';
 import { lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
 import { recordReliability } from '@/server/trust/reliability';
 
 export interface CreateSessionInput {
-  slotId: string; targetCount: number; minToConfirm: number; pricePerParticipant: number;
+  slotId: string; targetCount: number; // number of players (host included). The per-person share is computed by the server.
   skillMin?: number; skillMax?: number; joinDeadline?: Date; visibility?: 'public' | 'invite_only'; description?: string;
 }
 const ACTIVE = ['collecting', 'confirmed'] as const;
@@ -27,10 +28,10 @@ export async function createOpenSession(hostUserId: string, i: CreateSessionInpu
     const { slot, venue, venueSport } = await loadBookable(tx, i.slotId);
     if (!venueSport) throw E.notFound();
     const skillMin = i.skillMin ?? 0, skillMax = i.skillMax ?? 99;
-    if (!Number.isInteger(i.targetCount) || !Number.isInteger(i.minToConfirm) || i.minToConfirm < 2 || i.minToConfirm > i.targetCount) throw E.invalid('تعداد هدف باید حداقل ۲ و حداقل تأیید نباید از ظرفیت هدف بیشتر باشد.');
-    if (i.targetCount > venueSport.maxCapacity) throw E.invalid(`ظرفیت هدف نمی‌تواند از ظرفیت سالن (${venueSport.maxCapacity}) بیشتر باشد.`);
+    if (!Number.isInteger(i.targetCount) || i.targetCount < 2) throw E.invalid('تعداد بازیکنان باید حداقل ۲ نفر باشد.');
+    if (i.targetCount > venueSport.maxCapacity) throw E.invalid(`تعداد بازیکنان نمی‌تواند از ظرفیت سالن (${venueSport.maxCapacity}) بیشتر باشد.`);
+    const share = splitShare(slot.price, i.targetCount); // never trusted from the client
     if (skillMin < 0 || skillMax > 99 || skillMin > skillMax) throw E.invalid('بازهٔ مهارت معتبر نیست.');
-    if (!Number.isInteger(i.pricePerParticipant) || i.pricePerParticipant * i.minToConfirm < slot.price) throw E.invalid('با این سهم هر نفر و حداقل تأیید، هزینهٔ سالن پوشش داده نمی‌شود.');
     const deadline = i.joinDeadline ?? new Date(slot.startsAt.getTime() - 24 * 3_600_000);
     if (deadline <= now || deadline >= slot.startsAt) throw E.invalid('مهلت پیوستن باید در آینده و قبل از شروع سانس باشد.');
     const { fee, cancel } = await policies(tx);
@@ -41,13 +42,13 @@ export async function createOpenSession(hostUserId: string, i: CreateSessionInpu
     const { holdExpiresAt } = await acquireSlot(tx, slot.id, r.id, now);
     await tx.update(schema.reservations).set({ holdExpiresAt }).where(eq(schema.reservations.id, r.id));
     const [s] = await tx.insert(schema.openSessions).values({
-      reservationId: r.id, hostUserId, venueId: venue.id, slotId: slot.id, sportId: slot.sportId, targetCount: i.targetCount, minToConfirm: i.minToConfirm,
-      skillMin, skillMax, pricePerParticipant: i.pricePerParticipant, joinDeadline: deadline, visibility: i.visibility ?? 'public',
+      reservationId: r.id, hostUserId, venueId: venue.id, slotId: slot.id, sportId: slot.sportId, targetCount: i.targetCount, minToConfirm: i.targetCount,
+      skillMin, skillMax, pricePerParticipant: share, joinDeadline: deadline, visibility: i.visibility ?? 'public',
       inviteToken: randomBytes(12).toString('base64url'), description: (i.description ?? '').slice(0, 500),
     }).returning();
-    const [p] = await tx.insert(schema.sessionParticipants).values({ sessionId: s.id, userId: hostUserId, isHost: true, status: 'pending_payment', holdExpiresAt, amount: i.pricePerParticipant }).returning();
-    const intent = await createIntent(tx, { reservationId: r.id, payerUserId: hostUserId, participantId: p.id, base: i.pricePerParticipant, feeRule: fee, venuePayable: i.pricePerParticipant });
-    return { sessionId: s.id, reservationId: r.id, intentId: intent.id, holdExpiresAt, inviteToken: s.inviteToken };
+    const [p] = await tx.insert(schema.sessionParticipants).values({ sessionId: s.id, userId: hostUserId, isHost: true, status: 'pending_payment', holdExpiresAt, amount: share }).returning();
+    const intent = await createIntent(tx, { reservationId: r.id, payerUserId: hostUserId, participantId: p.id, base: share, feeRule: fee, venuePayable: share });
+    return { sessionId: s.id, reservationId: r.id, intentId: intent.id, holdExpiresAt, inviteToken: s.inviteToken, share };
   });
 }
 

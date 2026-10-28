@@ -32,7 +32,7 @@ export async function createSessionAction(slotId: string, fd: FormData) {
   if (!slot) redirect('/venues');
   const hours = num(fd.get('deadlineHours'), 24);
   const r = await run(`/book/${slotId}`, () => createOpenSession(u.id, {
-    slotId, targetCount: num(fd.get('target')), minToConfirm: num(fd.get('min')), pricePerParticipant: num(fd.get('price')),
+    slotId, targetCount: num(fd.get('target')),
     skillMin: num(fd.get('skillMin'), 0), skillMax: num(fd.get('skillMax'), 99),
     joinDeadline: new Date(slot.startsAt.getTime() - hours * 3_600_000),
     visibility: fd.get('visibility') === 'invite_only' ? 'invite_only' : 'public', description: String(fd.get('description') ?? ''),

@@ -9,9 +9,14 @@ export function calcFee(base: number, rule: FeeRule): number {
   return Math.max(rule.minToman, pct);
 }
 
-/** Suggested price per participant: slot price / target, rounded UP to the next 1,000 toman (venue never underpaid). */
-export function suggestPricePerParticipant(slotPrice: number, target: number): number {
-  return Math.ceil(slotPrice / target / 1000) * 1000;
+/**
+ * Automatic split: every one of `players` pays the same share = slot price / players, rounded UP to the next
+ * 1,000 toman so the venue is never underpaid. The (small) rounding surplus stays with the venue and is shown
+ * to the user before they commit. The service fee is charged on top, per person.
+ */
+export function splitShare(slotPrice: number, players: number): number {
+  if (!Number.isInteger(players) || players < 2) throw new Error('players must be an integer >= 2');
+  return Math.ceil(slotPrice / players / 1000) * 1000;
 }
 
 /** Refund percent for a cancellation `hoursBefore` the start. Tiers: first tier whose minHoursBefore <= hoursBefore. After the start => 0. */

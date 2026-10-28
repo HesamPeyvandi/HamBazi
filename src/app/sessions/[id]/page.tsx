@@ -5,6 +5,8 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { currentUser } from '@/server/auth/session';
 import { getSessionDetail } from '@/server/booking/sessions';
+import { teamsOfUser } from '@/server/teams';
+import { inviteTeamToSessionAction } from '@/server/teams/actions';
 import { joinSessionAction, leaveSessionAction, updateSessionAction, cancelReservationAction } from '@/server/booking/actions';
 import { env } from '@/server/env';
 import { Avatar } from '@/components/ui/misc';
@@ -13,7 +15,7 @@ import { formatJalaliDateTime, formatJalaliWithWeekday, formatTime } from '@/lib
 import { PAY_STATUS, SESSION_STATUS } from '@/lib/labels';
 
 const UUID = /^[0-9a-f-]{36}$/i;
-const OK: Record<string, string> = { paid: 'پرداخت (شبیه‌سازی‌شده) انجام شد.', left: 'از سانس خارج شدید.', left_refund: 'از سانس خارج شدید و بازگشت وجه (شبیه‌سازی‌شده) ثبت شد.', updated: 'تغییرات ذخیره شد.' };
+const OK: Record<string, string> = { team_invited: 'دعوت برای اعضای تیم ارسال شد.', paid: 'پرداخت (شبیه‌سازی‌شده) انجام شد.', left: 'از سانس خارج شدید.', left_refund: 'از سانس خارج شدید و بازگشت وجه (شبیه‌سازی‌شده) ثبت شد.', updated: 'تغییرات ذخیره شد.' };
 
 export default async function SessionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string; ok?: string; err?: string }> }) {
   const { id } = await params;
@@ -28,6 +30,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
   const full = d.confirmedCount >= s.targetCount;
   const canJoin = active && !d.isMember && !full && s.joinDeadline > new Date();
   const invite = d.isHost && s.inviteToken ? `${env().appUrl.replace(/\/$/, '')}/sessions/join/${s.inviteToken}` : null;
+  const myTeams = d.isHost && user ? (await teamsOfUser(user.id)).filter((x) => x.sportId === s.sportId) : [];
   const hostRes = d.isHost ? await db().select().from(schema.reservations).where(eq(schema.reservations.id, s.reservationId)) : [];
   return (
     <div className="container-page max-w-3xl py-8">
@@ -43,11 +46,10 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
         <h2 id="cap-t" className="section-title mb-3">ظرفیت و هزینه</h2>
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div className="rounded-xl bg-page p-3"><dt className="text-ink-500">تأییدشده</dt><dd className="text-xl font-extrabold">{toFa(d.confirmedCount)}</dd></div>
-          <div className="rounded-xl bg-page p-3"><dt className="text-ink-500">هدف</dt><dd className="text-xl font-extrabold">{toFa(s.targetCount)}</dd></div>
-          <div className="rounded-xl bg-page p-3"><dt className="text-ink-500">حداقل قطعی</dt><dd className="text-xl font-extrabold">{toFa(s.minToConfirm)}</dd></div>
+          <div className="rounded-xl bg-page p-3"><dt className="text-ink-500">تعداد بازیکنان</dt><dd className="text-xl font-extrabold">{toFa(s.targetCount)}</dd></div>
           <div className="rounded-xl bg-page p-3"><dt className="text-ink-500">سهم هر نفر</dt><dd className="text-base font-extrabold">{formatToman(s.pricePerParticipant)}</dd></div>
         </dl>
-        <p className="help mt-3">مهلت پیوستن: {formatJalaliDateTime(s.joinDeadline)}. اگر تا آن زمان به حداقل نفرات نرسد، سانس لغو و مبلغ پرداختی‌ها بازگردانده می‌شود. سطح مهارت مجاز: {toFa(s.skillMin)} تا {toFa(s.skillMax)}.</p>
+        <p className="help mt-3">مهلت پیوستن: {formatJalaliDateTime(s.joinDeadline)}. اگر تا آن زمان ظرفیت تکمیل نشود، سانس لغو و مبلغ پرداختی‌ها بازگردانده می‌شود. سطح مهارت مجاز: {toFa(s.skillMin)} تا {toFa(s.skillMax)}.</p>
         {s.cancelReason && <p className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">این سانس لغو شده است.</p>}
       </section>
       <section className="card mt-5 p-6" aria-labelledby="players-t">
@@ -66,6 +68,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
       </div>
       {d.isHost && (
         <section className="card mt-5 p-6" aria-labelledby="host-t"><h2 id="host-t" className="section-title mb-3">مدیریت سانس (میزبان)</h2>
+          {active && myTeams.length > 0 && <form action={inviteTeamToSessionAction.bind(null, s.id)} className="mb-4 flex flex-wrap items-end gap-2"><div className="min-w-48 flex-1"><label className="label" htmlFor="teamId">دعوت اعضای تیم من</label><select id="teamId" name="teamId" className="field">{myTeams.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div><button className="btn btn-outline">ارسال دعوت به تیم</button></form>}
           {invite && <div className="mb-4"><p className="label flex items-center gap-1"><Share2 className="h-4 w-4" aria-hidden />لینک دعوت</p><input readOnly value={invite} dir="ltr" className="field text-sm" aria-label="لینک دعوت" /></div>}
           {active && <form action={updateSessionAction.bind(null, s.id)} className="space-y-3">
             <div><label className="label" htmlFor="description">توضیحات</label><textarea id="description" name="description" rows={3} maxLength={500} defaultValue={s.description} className="field" /></div>

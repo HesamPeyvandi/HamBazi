@@ -37,8 +37,8 @@ const uid = (phone) => psql(`select id from users where phone_e164='+98${phone.s
 // ---------- a confirmed open session with 3 players at the seeded venue (owned by the demo manager)
 const H = await login('09000000001'); const J = await login('09000000011'); const N = await login('09000000012');
 const slotId = psql(`select t.id from time_slots t join venues v on v.id=t.venue_id where v.slug='aftab' and t.status='open' and t.starts_at > now() + interval '3 days' order by t.starts_at limit 1`);
-await H.page.goto(`${BASE}/book/${slotId}`, { waitUntil: 'networkidle' });
-await H.page.fill('#target', '4'); await H.page.fill('#min', '2');
+await H.page.goto(`${BASE}/book/${slotId}?mode=split`, { waitUntil: 'networkidle' });
+await H.page.selectOption('#target', '3');
 await H.page.click('button:has-text("ایجاد سانس و پرداخت سهم من")'); await H.page.waitForURL(/\/pay\//);
 await H.page.click('button:has-text("پرداخت (شبیه‌سازی)")'); await H.page.waitForURL(/\/sessions\/[0-9a-f-]{36}\?ok=paid/);
 const sessionUrl = H.page.url().split('?')[0];

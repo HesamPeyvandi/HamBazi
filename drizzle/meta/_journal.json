@@ -43,6 +43,13 @@
       "when": 1793101098732,
       "tag": "0005_trust_phase3",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793155620501,
+      "tag": "0006_teams_phase5",
+      "breakpoints": true
     }
   ]
 }

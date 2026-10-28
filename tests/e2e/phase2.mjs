@@ -134,7 +134,16 @@ check('loser sees Persian message', (await loser.locator('[role=alert]').count()
 
 // ---------- open session 2 of 3: host + joiner
 await ap.goto(`${BASE}/book/${slotIds[2]}`, { waitUntil: 'networkidle' });
-await ap.fill('#target', '3'); await ap.fill('#min', '2');
+check('booking page offers both payment modes', (await ap.locator('[role=tab]').count()) === 2 && (await ap.locator('[role=tab][aria-selected=true]').innerText()).includes('همه را من می‌پردازم'));
+await ap.click('[role=tab]:has-text("تقسیم بین بازیکنان")'); await ap.waitForURL('**mode=split**'); await ap.waitForSelector('#target');
+check('split mode has no manual price/min inputs', (await ap.locator('#price, #min').count()) === 0);
+const slotPrice = Number(psql(`select price from time_slots where id='${slotIds[2]}'`));
+const shareFor = (n) => Math.ceil(slotPrice / n / 1000) * 1000;
+await ap.selectOption('#target', '2');
+check('auto share for 2 players is price/2 rounded up to 1000', toEn(await ap.locator('[data-testid=share]').innerText()).replace(/[^\d]/g, '') === String(shareFor(2)), await ap.locator('[data-testid=share]').innerText());
+await ap.selectOption('#target', '5');
+check('share updates live when players change (5)', toEn(await ap.locator('[data-testid=share]').innerText()).replace(/[^\d]/g, '') === String(shareFor(5)));
+await ap.selectOption('#target', '2');
 await ap.screenshot({ path: `${SHOTS}/book-session.png`, fullPage: true });
 await ap.click('button:has-text("ایجاد سانس و پرداخت سهم من")');
 await ap.waitForURL(/\/pay\//); await ap.click('button:has-text("پرداخت (شبیه‌سازی)")');

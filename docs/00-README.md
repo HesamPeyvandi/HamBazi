@@ -1,25 +1,24 @@
-# هم‌بازی (HamBazi) — مستندات
+# HamBazi — documentation index
 
-وضعیت: **فاز ۴ کامل شد** (داشبورد مالک، تنظیمات کاربر، پنل ادمین)؛ در انتظار استقرار/بازخورد شما و تأیید برای فاز ۵ (تیم/مچینگ).
+Status: **Phase 5 complete** (automatic split payment, teams & matching, English README). Waiting for your deployment feedback and approval for Phase 6 (chat).
 
-| سند | محتوا |
+> The documents below are written in **Persian**. The project [README](../README.md) is in English.
+
+| Document | Content |
 |---|---|
-| [01-reference-inventory](01-reference-inventory.md) | نگاشت ۲۰ تصویر به صفحات + تعارض‌ها با بریف |
-| [02-architecture](02-architecture.md) | پشتهٔ فنی، جریان‌های A–I، امنیت، Vercel، زمان‌بندی |
-| [03-data-model](03-data-model.md) | جداول، قیود، ایندکس‌ها، قواعد امتیاز |
-| [04-state-machines](04-state-machines.md) | رزرو، سانس، شرکت‌کننده، پرداخت، ریفاند، سیاست لغو |
-| [05-design-system](05-design-system.md) | رنگ، فونت، اجزا، breakpoint، دسترس‌پذیری |
-| [06-phase-plan-and-questions](06-phase-plan-and-questions.md) | فازها، تست، پرسش‌ها، مراحل تست دسترسی از ایران |
-| [07-phase1-handoff](07-phase1-handoff.md) | تحویل فاز ۱ |
-| [08-deployment-github-vercel-neon](08-deployment-github-vercel-neon.md) | **راهنمای کامل استقرار GitHub + Neon + Vercel** |
-| [09-phase2-handoff](09-phase2-handoff.md) | تحویل فاز ۲ |
-| [10-phase3-handoff](10-phase3-handoff.md) | تحویل فاز ۳ |
-| [11-phase4-handoff](11-phase4-handoff.md) | تحویل فاز ۴ |
-| [FONT](FONT.md) | جایگزینی فونت |
-| [ASSETS](ASSETS.md) | فایل‌هایی که از شما لازم است |
+| [01-reference-inventory](01-reference-inventory.md) | Mapping of the 20 reference UI images to pages, and conflicts with the brief |
+| [02-architecture](02-architecture.md) | Stack, flows A–I, security, Vercel, scheduling |
+| [03-data-model](03-data-model.md) | Tables, constraints, indexes, scoring rules |
+| [04-state-machines](04-state-machines.md) | Reservation, session, participant, payment, refund, cancellation policy |
+| [05-design-system](05-design-system.md) | Colors, font, components, breakpoints, accessibility |
+| [06-phase-plan-and-questions](06-phase-plan-and-questions.md) | Phases, test strategy, open questions, Iran-reachability test steps |
+| [07-phase1-handoff](07-phase1-handoff.md) | Phase 1 handoff |
+| [08-deployment-github-vercel-neon](08-deployment-github-vercel-neon.md) | **Complete GitHub + Neon + Vercel deployment guide** |
+| [09-phase2-handoff](09-phase2-handoff.md) | Phase 2 handoff |
+| [10-phase3-handoff](10-phase3-handoff.md) | Phase 3 handoff |
+| [11-phase4-handoff](11-phase4-handoff.md) | Phase 4 handoff |
+| [12-phase5-handoff](12-phase5-handoff.md) | Phase 5 handoff |
+| [FONT](FONT.md) | How to replace the brand font |
+| [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 
-پوشهٔ `iran-reachability-test/` : یک صفحهٔ HTML ساده برای تست دسترسی Vercel از ایران.
-
-## Changelog
-- فاز ۰: مستندات اولیه، بدون کد.
-- فاز ۱ و ۲: به CHANGELOG و اسناد تحویل مراجعه کنید.
+`iran-reachability-test/` is a tiny static page for checking Vercel reachability from Iran.

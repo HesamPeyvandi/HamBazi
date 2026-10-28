@@ -440,3 +440,60 @@ export const reports = pgTable('reports', {
   check('reports_target_type', sql`${t.targetType} IN ('user','venue','session')`),
   check('reports_status', sql`${t.status} IN ('open','resolved','dismissed')`),
 ]);
+
+/* =====================  PHASE 5: teams & groups  ===================== */
+export const teams = pgTable('teams', {
+  id: id(),
+  name: text('name').notNull(),
+  sportId: uuid('sport_id').notNull().references(() => sports.id),
+  cityId: uuid('city_id').notNull().references(() => cities.id),
+  description: text('description').notNull().default(''),
+  /** public: anyone may join instantly. request: join needs captain approval. invite_only: only via invite link. */
+  joinMode: text('join_mode').notNull().default('request'),
+  maxMembers: integer('max_members').notNull().default(20),
+  inviteToken: text('invite_token').notNull().unique(),
+  status: text('status').notNull().default('active'), // active | disbanded
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('teams_name_city_active').on(sql`lower(${t.name})`, t.cityId).where(sql`${t.status} = 'active'`),
+  index('teams_browse_idx').on(t.status, t.sportId, t.cityId),
+  check('teams_name_len', sql`char_length(${t.name}) BETWEEN 3 AND 40`),
+  check('teams_max_members', sql`${t.maxMembers} BETWEEN 2 AND 50`),
+  check('teams_join_mode', sql`${t.joinMode} IN ('public','request','invite_only')`),
+  check('teams_status', sql`${t.status} IN ('active','disbanded')`),
+]);
+
+export const teamMembers = pgTable('team_members', {
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'), // captain | member
+  joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.teamId, t.userId] }),
+  index('team_members_user_idx').on(t.userId),
+  // exactly one captain per team, enforced by the database
+  uniqueIndex('team_one_captain').on(t.teamId).where(sql`${t.role} = 'captain'`),
+  check('team_member_role', sql`${t.role} IN ('captain','member')`),
+]);
+
+export const teamRequests = pgTable('team_requests', {
+  id: id(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  message: text('message').notNull().default(''),
+  status: text('status').notNull().default('pending'), // pending | approved | rejected | cancelled
+  createdAt: createdAt(),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+}, (t) => [
+  uniqueIndex('team_request_one_pending').on(t.teamId, t.userId).where(sql`${t.status} = 'pending'`),
+  check('team_request_status', sql`${t.status} IN ('pending','approved','rejected','cancelled')`),
+]);
+
+/** One invitation of a whole team to a session (anti-spam: unique per team+session). */
+export const teamSessionInvites = pgTable('team_session_invites', {
+  id: id(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  sessionId: uuid('session_id').notNull().references(() => openSessions.id, { onDelete: 'cascade' }),
+  invitedBy: uuid('invited_by').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex('team_session_invite_once').on(t.teamId, t.sessionId)]);

@@ -6,7 +6,7 @@ import { createFullReservation, cancelReservationByPlayer, cancelReservationByVe
 import { createOpenSession, joinSession, leaveSession, getSessionDetail, listOpenSessions } from '@/server/booking/sessions';
 import { simulatePay } from '@/server/booking/settle';
 import { sweepDue } from '@/server/booking/lifecycle';
-import { calcFee, refundPercentFor, suggestPricePerParticipant, refundAmount } from '@/server/booking/money';
+import { calcFee, refundPercentFor, splitShare, refundAmount } from '@/server/booking/money';
 import { DomainError } from '@/server/booking/errors';
 
 let owner: string, other: string, venueId: string, venue2Id: string, sportId: string;
@@ -60,7 +60,9 @@ describe('money rules', () => {
     expect(refundPercentFor(t, 48)).toBe(100); expect(refundPercentFor(t, 24)).toBe(100);
     expect(refundPercentFor(t, 23.9)).toBe(50); expect(refundPercentFor(t, -1)).toBe(0);
     expect(refundAmount(210001, 50)).toBe(105000);
-    expect(suggestPricePerParticipant(200000, 7)).toBe(29000);
+    expect(splitShare(200000, 7)).toBe(29000);
+    expect(splitShare(200000, 10)).toBe(20000); expect(splitShare(200000, 9)).toBe(23000); expect(splitShare(1, 2)).toBe(1000);
+    expect(() => splitShare(200000, 1)).toThrow();
   });
 });
 
@@ -167,7 +169,7 @@ describe('cancellation and simulated refunds', () => {
 describe('open sessions', () => {
   const mkSession = async (host: string, hoursAhead = 72, over: Partial<Parameters<typeof createOpenSession>[1]> = {}) => {
     const slot = await mkSlot(hoursAhead);
-    const s = await createOpenSession(host, { slotId: slot.id, targetCount: 10, minToConfirm: 7, pricePerParticipant: 29000, joinDeadline: new Date(Date.now() + 24 * H), ...over });
+    const s = await createOpenSession(host, { slotId: slot.id, targetCount: 7, joinDeadline: new Date(Date.now() + 24 * H), ...over });
     await simulatePay(host, s.intentId);
     return { slot, ...s };
   };
@@ -187,7 +189,7 @@ describe('open sessions', () => {
     expect(it.amount).toBe(it.baseAmount + it.feeAmount); expect(it.feeAmount).toBe(5000);
   });
   it('rejects duplicate join, enforces capacity, skill range and invite-only', async () => {
-    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 3, minToConfirm: 3, pricePerParticipant: 70000 });
+    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 3 });
     const u1 = await mkUser(); await joinAndPay(s.sessionId, u1);
     await expectCode(joinSession(u1, s.sessionId), 'already_joined');
     const u2 = await mkUser(); await joinSession(u2, s.sessionId); // pending hold takes the last seat
@@ -202,13 +204,13 @@ describe('open sessions', () => {
     expect((await listOpenSessions()).some((r) => r.s.id === priv.sessionId)).toBe(false);
   });
   it('concurrent joins never exceed capacity', async () => {
-    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 4, minToConfirm: 4, pricePerParticipant: 50000 });
+    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 4 });
     const us = await Promise.all(Array.from({ length: 8 }, () => mkUser()));
     const res = await Promise.allSettled(us.map((u) => joinSession(u, s.sessionId)));
     expect(res.filter((r) => r.status === 'fulfilled')).toHaveLength(3); // host already holds one seat
   });
   it('abandoned participant hold frees the seat', async () => {
-    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 2, minToConfirm: 2, pricePerParticipant: 100000 });
+    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 2 });
     const u = await mkUser(); await joinSession(u, s.sessionId);
     await expectCode(joinSession(await mkUser(), s.sessionId), 'full');
     await sqlClient()`UPDATE session_participants SET hold_expires_at = now() - interval '1 minute' WHERE status = 'pending_payment'`;
@@ -216,7 +218,7 @@ describe('open sessions', () => {
   });
   it('host who never pays: session expires, slot freed', async () => {
     const host = await mkUser(); const slot = await mkSlot(72);
-    const s = await createOpenSession(host, { slotId: slot.id, targetCount: 10, minToConfirm: 7, pricePerParticipant: 29000 });
+    const s = await createOpenSession(host, { slotId: slot.id, targetCount: 7 });
     await sqlClient()`UPDATE slot_claims SET hold_expires_at = now() - interval '1 minute'`;
     await sqlClient()`UPDATE session_participants SET hold_expires_at = now() - interval '1 minute'`;
     await sweepDue();
@@ -241,14 +243,14 @@ describe('open sessions', () => {
     await expectCode(joinSession(await mkUser(), s.sessionId), 'bad_state');
   });
   it('deadline with target met stays confirmed', async () => {
-    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 3, minToConfirm: 2, pricePerParticipant: 100000 });
+    const host = await mkUser(); const s = await mkSession(host, 72, { targetCount: 2 });
     await joinAndPay(s.sessionId, await mkUser());
     await sqlClient()`UPDATE open_sessions SET join_deadline = now() - interval '1 minute'`;
     await sweepDue();
     expect((await db().select().from(schema.openSessions))[0].status).toBe('confirmed');
   });
   it('leaving follows the policy; host cancel refunds everyone (host by tier)', async () => {
-    const host = await mkUser(); const s = await mkSession(host, 5, { targetCount: 4, minToConfirm: 3, pricePerParticipant: 70000, joinDeadline: new Date(Date.now() + 2 * H) });
+    const host = await mkUser(); const s = await mkSession(host, 5, { targetCount: 4, joinDeadline: new Date(Date.now() + 2 * H) });
     const u = await mkUser(); await joinAndPay(s.sessionId, u);
     expect((await leaveSession(u, s.sessionId)).refundPercent).toBe(50);
     await expectCode(leaveSession(host, s.sessionId), 'bad_state');
@@ -259,12 +261,20 @@ describe('open sessions', () => {
     expect(rf.map((x) => x.percent).sort()).toEqual([100, 50, 50]);
     expect(await getSessionDetail(s.sessionId, host)).toMatchObject({ session: { status: 'cancelled' } });
   });
-  it('validation: target above venue capacity or price not covering the venue', async () => {
+  it('validation: players above venue capacity or below 2; share is always computed by the server', async () => {
     const host = await mkUser(); const slot = await mkSlot(72);
-    await expectCode(createOpenSession(host, { slotId: slot.id, targetCount: 13, minToConfirm: 7, pricePerParticipant: 50000 }), 'invalid');
-    await expectCode(createOpenSession(host, { slotId: slot.id, targetCount: 10, minToConfirm: 7, pricePerParticipant: 10000 }), 'invalid');
-    await expectCode(createOpenSession(host, { slotId: slot.id, targetCount: 10, minToConfirm: 11, pricePerParticipant: 50000 }), 'invalid');
+    await expectCode(createOpenSession(host, { slotId: slot.id, targetCount: 13 }), 'invalid');
+    await expectCode(createOpenSession(host, { slotId: slot.id, targetCount: 1 }), 'invalid');
     expect(await slotStatus(slot.id)).toBe('open');
+    const s = await createOpenSession(host, { slotId: slot.id, targetCount: 7, ...({ pricePerParticipant: 1000 } as object) });
+    expect(s.share).toBe(29000);               // a tampered client price is ignored
+    const [row] = await db().select().from(schema.openSessions);
+    expect(row.pricePerParticipant).toBe(29000); expect(row.minToConfirm).toBe(7);
+    const it = (await db().select().from(schema.paymentIntents))[0];
+    expect(it.baseAmount).toBe(29000);
+  });
+  it('the shares of a full session always cover the venue price (never underpaid)', async () => {
+    for (const price of [150000, 200000, 333333, 1_000_000]) for (let n = 2; n <= 12; n++) expect(splitShare(price, n) * n).toBeGreaterThanOrEqual(price);
   });
   it('payment status is visible to host only', async () => {
     const host = await mkUser(); const s = await mkSession(host); const u = await mkUser(); await joinAndPay(s.sessionId, u);

@@ -57,3 +57,11 @@
 ## قوانین امتیاز (مستند، قطعی)
 - **مهارت (OVR):** `skill = (w_self · self + Σ peer) / (w_self + n_peer)` با `w_self = 3`؛ با رشد تعداد نظرات همتا وزن خودارزیابی کم می‌شود؛ نمایش به‌صورت «تخمین».
 - **تعهد (Reliability):** پایه ۱۰۰؛ حضور +۱ (سقف ۱۰۰)، لغو دیرهنگام −۵، غیبت −۱۵، ترک زودهنگام −۵؛ حداقل ۰. درصد حضور = حاضر/ثبت‌نام‌شدهٔ قطعی. مبتدی بودن هرگز جریمه نمی‌شود (جدا از مهارت).
+
+
+## افزوده‌های فاز ۵
+- `teams(id, name, sport_id, city_id, description, join_mode public|request|invite_only, max_members 2..50, invite_token UNIQUE, status active|disbanded)` — یکتایی `lower(name)+city_id` فقط برای تیم‌های فعال.
+- `team_members(team_id, user_id, role captain|member)` — کلید اصلی ترکیبی؛ ایندکس یکتای جزئی «فقط یک کاپیتان برای هر تیم».
+- `team_requests(id, team_id, user_id, message, status pending|approved|rejected|cancelled)` — یک درخواست در انتظار برای هر (تیم، کاربر).
+- `team_session_invites(team_id, session_id)` یکتا.
+- قاعدهٔ سهم: `open_sessions.price_per_participant = ceil(slot.price / target_count / 1000) * 1000` (سرور)؛ `min_to_confirm = target_count`.

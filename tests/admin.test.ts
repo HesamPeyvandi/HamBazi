@@ -91,8 +91,8 @@ describe('notification preferences', () => {
   });
   it('saved prefs round-trip and are honored by notify()', async () => {
     const u = await mkUser();
-    await saveNotifPrefs(u, { sessions: false, rating: true, owner: true });
-    expect(await getNotifPrefs(u)).toEqual({ sessions: false, rating: true, owner: true });
+    await saveNotifPrefs(u, { sessions: false, rating: true, teams: true, owner: true });
+    expect(await getNotifPrefs(u)).toEqual({ sessions: false, rating: true, teams: true, owner: true });
     const { notify } = await import('@/server/booking/core');
     await db().transaction(async (tx) => { await notify(tx, u, 'participant_joined', 'x'); await notify(tx, u, 'reservation_cancelled', 'y'); await notify(tx, u, 'rate_game', 'z'); });
     const rows = await db().select().from(schema.notifications).where(eq(schema.notifications.userId, u));

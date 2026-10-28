@@ -33,7 +33,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
               <p className="mt-1 flex items-center gap-1 text-sm text-ink-500"><MapPin className="h-4 w-4" aria-hidden />{x.neighborhood}</p>
               <div className="mt-4"><div className="flex justify-between text-sm"><span className="inline-flex items-center gap-1"><Users className="h-4 w-4" aria-hidden />{toFa(x.confirmed)} از {toFa(x.s.targetCount)} نفر</span><span className="font-bold text-brand-700">{formatToman(x.s.pricePerParticipant)}</span></div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-page" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="تکمیل ظرفیت"><div className="h-full bg-brand-600" style={{ width: `${pct}%` }} /></div></div>
-              <p className="help mt-3">حداقل برای قطعی شدن: {toFa(x.s.minToConfirm)} نفر · مهلت پیوستن: {formatJalaliDateTime(x.s.joinDeadline)}</p>
+              <p className="help mt-3">سهم هر نفر ثابت است · مهلت پیوستن: {formatJalaliDateTime(x.s.joinDeadline)}</p>
             </Link></li>);
         })}</ul>)}</div>
     </div>

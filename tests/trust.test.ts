@@ -34,7 +34,7 @@ async function startedAgo(slotId: string, hoursAgo = 3) {
 /** confirmed session with host + `extra` paid participants. */
 async function session(extra: number) {
   const host = await mkUser(); const sl = await slot(72);
-  const s = await createOpenSession(host, { slotId: sl.id, targetCount: 6, minToConfirm: 2, pricePerParticipant: 100000, joinDeadline: new Date(Date.now() + 24 * H) });
+  const s = await createOpenSession(host, { slotId: sl.id, targetCount: extra + 1, joinDeadline: new Date(Date.now() + 24 * H) });
   await simulatePay(host, s.intentId);
   const players = [host];
   for (let i = 0; i < extra; i++) { const u = await mkUser(); const j = await joinSession(u, s.sessionId); await simulatePay(u, j.intentId); players.push(u); }
@@ -83,7 +83,7 @@ describe('reliability from cancellations', () => {
     expect((await leaveSession(early.players[1], early.sessionId)).refundPercent).toBe(100);
     expect((await getReliability(early.players[1])).score).toBe(100);
     const host = await mkUser(); const sl = await slot(10);
-    const s = await createOpenSession(host, { slotId: sl.id, targetCount: 4, minToConfirm: 2, pricePerParticipant: 100000, joinDeadline: new Date(Date.now() + 2 * H) });
+    const s = await createOpenSession(host, { slotId: sl.id, targetCount: 4, joinDeadline: new Date(Date.now() + 2 * H) });
     await simulatePay(host, s.intentId);
     const u = await mkUser(); const j = await joinSession(u, s.sessionId); await simulatePay(u, j.intentId);
     expect((await leaveSession(u, s.sessionId)).refundPercent).toBe(50);
