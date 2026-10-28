@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireRole } from '@/server/auth/rbac';
 import { listReports, REPORT_REASONS } from '@/server/trust/reports';
 import { resolveReportAction } from '@/server/trust/actions';
+import { AdminNav } from '@/components/layout/AdminNav';
 import { EmptyState } from '@/components/ui/misc';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
 
@@ -14,7 +15,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
   const rows = await listReports(u, 'open');
   const q = await searchParams;
   return (
-    <div className="container-page max-w-3xl py-8"><div className="flex items-center justify-between"><h1 className="text-2xl font-extrabold">گزارش‌های تخلف</h1><Link href="/admin/venues" className="text-sm font-bold text-brand-600">تأیید سالن‌ها</Link></div>
+    <div className="container-page max-w-4xl py-8"><h1 className="mb-4 text-2xl font-extrabold">گزارش‌های تخلف</h1><AdminNav current="/admin/reports" />
       {q.ok && <p role="status" className="mt-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">تصمیم ثبت شد.</p>}
       {q.err && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
       <div className="mt-5">{rows.length === 0 ? <EmptyState title="گزارش بازی نیست" /> : (

@@ -66,7 +66,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         </section>
       ))}
 
-      <p className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-brand-600"><Link href="/profile/commitment">تعهد و تاریخچه</Link><Link href={`/players/${user.id}`}>مشاهدهٔ پروفایل عمومی من</Link></p>
+      <p className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-brand-600"><Link href="/profile/commitment">تعهد و تاریخچه</Link><Link href={`/players/${user.id}`}>مشاهدهٔ پروفایل عمومی من</Link><Link href="/settings">تنظیمات</Link></p>
 
       <form action={logoutAction} className="mt-6"><button className="btn btn-danger w-full"><LogOut className="h-4 w-4" aria-hidden />خروج از حساب</button></form>
     </div>

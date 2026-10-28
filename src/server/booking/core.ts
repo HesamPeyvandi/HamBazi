@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { refundAmount } from './money';
+import { wantsNotification } from '../account';
 
 export type Db = ReturnType<typeof db>;
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
@@ -8,6 +9,9 @@ export type Reservation = typeof schema.reservations.$inferSelect;
 export type Intent = typeof schema.paymentIntents.$inferSelect;
 
 export async function notify(tx: Tx, userId: string, type: string, title: string, body = '', link?: string) {
+  // Optional groups can be switched off by the user; critical types (payments, cancellations) always pass.
+  const [p] = await tx.select({ n: schema.userProfiles.notifPrefs }).from(schema.userProfiles).where(eq(schema.userProfiles.userId, userId));
+  if (!wantsNotification(p?.n, type)) return;
   await tx.insert(schema.notifications).values({ userId, type, title, body, link });
 }
 export async function notifyManagers(tx: Tx, venueId: string, type: string, title: string, body = '', link?: string) {

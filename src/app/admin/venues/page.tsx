@@ -1,5 +1,8 @@
 import { requireRole } from '@/server/auth/rbac';
 import { listPendingVenues } from '@/server/owner/venues';
+import { listManagedVenues } from '@/server/admin';
+import { setVenueSuspendedAction } from '@/server/admin/actions';
+import { AdminNav } from '@/components/layout/AdminNav';
 import { reviewVenueAction } from '@/server/owner/actions';
 import { EmptyState } from '@/components/ui/misc';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
@@ -9,9 +12,10 @@ export const metadata = { title: 'تأیید سالن‌ها' };
 export default async function AdminVenues({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const u = await requireRole(['admin']);
   const rows = await listPendingVenues(u);
+  const live = await listManagedVenues(u);
   const q = await searchParams;
   return (
-    <div className="container-page max-w-3xl py-8"><h1 className="text-2xl font-extrabold">سالن‌های در انتظار تأیید</h1>
+    <div className="container-page max-w-3xl py-8"><h1 className="mb-4 text-2xl font-extrabold">سالن‌ها</h1><AdminNav current="/admin/venues" /><h2 className="section-title mb-3">در انتظار تأیید</h2>
       {q.ok && <p role="status" className="mt-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">تصمیم ثبت شد.</p>}
       {q.err && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
       <div className="mt-5">{rows.length === 0 ? <EmptyState title="سالنی در انتظار تأیید نیست" /> : (
@@ -20,6 +24,12 @@ export default async function AdminVenues({ searchParams }: { searchParams: Prom
             <p className="mt-2 text-sm leading-7">{v.description}</p>
             <form className="mt-3 flex flex-wrap items-end gap-2"><div className="min-w-48 flex-1"><label className="label" htmlFor={`n-${v.id}`}>توضیح (برای رد کردن)</label><input id={`n-${v.id}`} name="note" className="field" /></div>
               <button formAction={reviewVenueAction.bind(null, v.id, 'approve')} className="btn btn-primary">تأیید و انتشار</button>
-              <button formAction={reviewVenueAction.bind(null, v.id, 'reject')} className="btn btn-danger">رد / نیاز به اصلاح</button></form></li>))}</ul>)}</div></div>
+              <button formAction={reviewVenueAction.bind(null, v.id, 'reject')} className="btn btn-danger">رد / نیاز به اصلاح</button></form></li>))}</ul>)}</div>
+      <h2 className="section-title mb-3 mt-8">منتشرشده و تعلیق‌شده</h2>
+      <ul className="space-y-2">{live.map((v) => (
+        <li key={v.id} className="card flex flex-wrap items-center justify-between gap-2 p-4"><span className="font-bold">{v.name} {v.status === 'suspended' && <span className="pill pill-danger ms-1">تعلیق</span>}</span>
+          <form className="flex items-center gap-2"><label className="sr-only" htmlFor={`sn-${v.id}`}>توضیح</label><input id={`sn-${v.id}`} name="note" placeholder="توضیح (اختیاری)" className="field !w-44" />
+            {v.status === 'published' ? <button formAction={setVenueSuspendedAction.bind(null, v.id, true)} className="btn btn-danger btn-sm">تعلیق سالن</button> : <button formAction={setVenueSuspendedAction.bind(null, v.id, false)} className="btn btn-primary btn-sm">بازگردانی</button>}</form></li>))}</ul>
+    </div>
   );
 }
