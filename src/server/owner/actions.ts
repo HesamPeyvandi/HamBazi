@@ -4,7 +4,7 @@ import { requireRole, requireUser } from '@/server/auth/rbac';
 import { DomainError } from '@/server/booking/errors';
 import { cancelReservationByVenue } from '@/server/booking/reservations';
 import { normalizeDigits } from '@/lib/i18n/digits';
-import { addVenueImage, becomeVenueManager, createSlots, createVenue, deleteSlot, removeVenueImage, reviewVenue, setSlotOpen, submitForReview, updateVenue } from './venues';
+import { addStaff, removeStaff, addVenueImage, becomeVenueManager, createSlots, createVenue, deleteSlot, removeVenueImage, reviewVenue, setSlotOpen, submitForReview, updateVenue } from './venues';
 
 const num = (v: FormDataEntryValue | null) => { const n = parseInt(normalizeDigits(String(v ?? '')).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : 0; };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -84,4 +84,17 @@ export async function reviewVenueAction(venueId: string, decision: 'approve' | '
   const u = await requireRole(['admin']);
   await run('/admin/venues', () => reviewVenue(u, venueId, decision, String(fd.get('note') ?? '').slice(0, 300)));
   redirect('/admin/venues?ok=1');
+}
+
+export async function addStaffAction(venueId: string, fd: FormData) {
+  const u = await manager();
+  if (!UUID.test(venueId)) redirect('/owner');
+  await run(`/owner/venues/${venueId}`, () => addStaff(u, venueId, String(fd.get('phone') ?? '')));
+  redirect(`/owner/venues/${venueId}?ok=staff_added`);
+}
+export async function removeStaffAction(venueId: string, userId: string) {
+  const u = await manager();
+  if (!UUID.test(venueId) || !UUID.test(userId)) redirect('/owner');
+  await run(`/owner/venues/${venueId}`, () => removeStaff(u, venueId, userId));
+  redirect(`/owner/venues/${venueId}?ok=staff_removed`);
 }

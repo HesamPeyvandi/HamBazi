@@ -1,3 +1,5 @@
+import { currentUser } from '@/server/auth/session';
+import { favoriteIds } from '@/server/favorites';
 import Link from 'next/link';
 import { LayoutGrid, List } from 'lucide-react';
 import { SearchBar } from '@/components/venues/SearchBar';
@@ -14,6 +16,7 @@ export default async function VenuesPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const { filters, view, raw } = parseVenueParams(sp);
   const [cities, sports, result] = await Promise.all([getCities(), getSportsList(), searchVenues(filters)]);
+  const me = await currentUser(); const favs = me ? await favoriteIds(me.id) : null;
 
   const qs = (over: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
@@ -65,9 +68,9 @@ export default async function VenuesPage({ searchParams }: { searchParams: Promi
           {result.items.length === 0 ? (
             <EmptyState title="سالنی با این مشخصات پیدا نشد" text="فیلترها را کمی تغییر دهید یا پاک کنید." action={<Link href={`/venues?city=${filters.citySlug}`} className="btn btn-primary">پاک کردن فیلترها</Link>} />
           ) : view === 'grid' ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{result.items.map((v) => <VenueGridCard key={v.id} v={v} />)}</div>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{result.items.map((v) => <VenueGridCard key={v.id} v={v} fav={favs ? favs.has(v.id) : null} />)}</div>
           ) : (
-            <div className="space-y-4">{result.items.map((v) => <VenueListItem key={v.id} v={v} />)}</div>
+            <div className="space-y-4">{result.items.map((v) => <VenueListItem key={v.id} v={v} fav={favs ? favs.has(v.id) : null} />)}</div>
           )}
           <Pagination page={result.page} total={result.total} pageSize={result.pageSize} hrefFor={(p) => qs({ page: p })} />
           <p className="sr-only">صفحه {toFa(result.page)}</p>

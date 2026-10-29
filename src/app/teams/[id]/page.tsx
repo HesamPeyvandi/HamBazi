@@ -49,7 +49,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
 
       <section className="card mt-5 p-6" aria-labelledby="mem-t"><h2 id="mem-t" className="section-title mb-4">اعضا</h2>
         <ul className="divide-y divide-line">{d.members.map((m) => (
-          <li key={m.userId} className="flex flex-wrap items-center gap-3 py-3"><Avatar src={m.avatar} name={m.name || 'کاربر'} size={40} />
+          <li key={m.userId} className="flex flex-wrap items-center gap-3 py-3"><Avatar seed={m.userId} src={m.avatar} name={m.name || 'کاربر'} size={40} />
             <div className="min-w-0 flex-1"><Link href={`/players/${m.userId}`} className="font-bold hover:text-brand-600">{m.name || 'کاربر'}</Link>{m.role === 'captain' && <span className="pill pill-warn ms-2"><Crown className="h-3.5 w-3.5" aria-hidden />کاپیتان</span>}</div>
             {m.ovr != null && <span className="text-sm text-ink-500">OVR <b className="text-ink-900">{toFa(m.ovr)}</b></span>}
             {d.isCaptain && m.role !== 'captain' && (

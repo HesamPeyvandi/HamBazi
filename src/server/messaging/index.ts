@@ -38,8 +38,9 @@ export interface Access {
 }
 export interface MessageDTO {
   seq: number; id: string; senderId: string; senderName: string; senderAvatar: string | null;
-  body: string; hidden: boolean; createdAt: string; mine: boolean;
+  body: string; hidden: boolean; createdAt: string; mine: boolean; replyTo: ReplyDTO | null;
 }
+export interface ReplyDTO { id: string; senderId: string; senderName: string; snippet: string; hidden: boolean }
 
 /* ---------------------------------------------------------------- text */
 
@@ -121,10 +122,15 @@ export async function ensureRoom(userId: string, kind: RoomKind, refId: string):
 // NB: drizzle's postgres.js client returns timestamps as strings even for raw queries, hence the `Ts` unions + iso().
 type Ts = Date | string;
 const iso = (t: Ts) => new Date(t).toISOString();
-interface Row { seq: number; id: string; sender_id: string; name: string | null; avatar: string | null; body: string; created_at: Ts; hidden_at: Ts | null }
+interface Row { seq: number; id: string; sender_id: string; name: string | null; avatar: string | null; body: string; created_at: Ts; hidden_at: Ts | null;
+  r_id: string | null; r_sender: string | null; r_name: string | null; r_body: string | null; r_hidden: Ts | null; r_blocked: boolean | null }
+const REPLY_JOIN = () => sqlClient()`LEFT JOIN chat_messages rm ON rm.id = m.reply_to_id AND rm.room_id = m.room_id LEFT JOIN users ru ON ru.id = rm.sender_id`;
+const REPLY_COLS = (me: string) => sqlClient()`rm.id AS r_id, rm.sender_id AS r_sender, ru.display_name AS r_name, rm.body AS r_body, rm.hidden_at AS r_hidden,
+  EXISTS (SELECT 1 FROM chat_blocks rb WHERE rb.room_id = m.room_id AND rb.blocker_id = ${me} AND rb.blocked_id = rm.sender_id) AS r_blocked`;
 const toDTO = (r: Row, me: string): MessageDTO => ({
   seq: Number(r.seq), id: r.id, senderId: r.sender_id, senderName: r.name || 'کاربر', senderAvatar: r.avatar,
   body: r.hidden_at ? '' : r.body, hidden: !!r.hidden_at, createdAt: iso(r.created_at), mine: r.sender_id === me,
+  replyTo: r.r_id ? { id: r.r_id, senderId: r.r_sender ?? '', senderName: r.r_blocked ? 'کاربر مسدودشده' : r.r_name || 'کاربر', snippet: r.r_hidden || r.r_blocked ? '' : [...(r.r_body ?? '').replace(/\s+/g, ' ')].slice(0, 100).join(''), hidden: !!r.r_hidden || !!r.r_blocked } : null,
 });
 
 /**
@@ -140,13 +146,13 @@ export async function getMessages(userId: string, roomId: string, opts: { after?
   let hasMore = false;
   if (opts.after !== undefined) {
     rows = await sql_<Row[]>`
-      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at
-      FROM chat_messages m JOIN users u ON u.id = m.sender_id
+      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, ${REPLY_COLS(userId)}
+      FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()}
       WHERE m.room_id = ${roomId} AND m.seq > ${opts.after} AND ${blocked} ORDER BY m.seq ASC LIMIT ${limit}`;
   } else {
     const got = await sql_<Row[]>`
-      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at
-      FROM chat_messages m JOIN users u ON u.id = m.sender_id
+      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, ${REPLY_COLS(userId)}
+      FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()}
       WHERE m.room_id = ${roomId} ${opts.before !== undefined ? sql_`AND m.seq < ${opts.before}` : sql_``} AND ${blocked}
       ORDER BY m.seq DESC LIMIT ${limit + 1}`;
     hasMore = got.length > limit;
@@ -173,7 +179,7 @@ export async function checkPollLimit(userId: string) {
 
 /* ---------------------------------------------------------------- sending */
 
-export async function sendMessage(userId: string, roomId: string, rawBody: unknown): Promise<MessageDTO> {
+export async function sendMessage(userId: string, roomId: string, rawBody: unknown, replyToId?: string | null): Promise<MessageDTO> {
   const body = normalizeBody(rawBody);
   const pre = await requireAccess(userId, roomId);
   if (!pre.canWrite) throw new DomainError('read_only', 'این گفت‌وگو فقط‌خواندنی است.');
@@ -188,14 +194,22 @@ export async function sendMessage(userId: string, roomId: string, rawBody: unkno
     const access = await getAccess(tx, userId, roomId); // re-check inside the lock: membership may have just been revoked
     if (!access) throw E.notFound();
     if (!access.canWrite) throw new DomainError('read_only', 'این گفت‌وگو فقط‌خواندنی است.');
-    const [m] = await tx.insert(schema.chatMessages).values({ roomId, senderId: userId, body }).returning();
+    let replyTo: ReplyDTO | null = null;
+    if (replyToId) {
+      const [t] = await tx.select({ id: schema.chatMessages.id, senderId: schema.chatMessages.senderId, body: schema.chatMessages.body, hiddenAt: schema.chatMessages.hiddenAt, name: schema.users.displayName })
+        .from(schema.chatMessages).innerJoin(schema.users, eq(schema.users.id, schema.chatMessages.senderId))
+        .where(and(eq(schema.chatMessages.id, replyToId), eq(schema.chatMessages.roomId, roomId)));
+      if (!t) throw E.invalid('پیامی که می‌خواهید به آن پاسخ دهید پیدا نشد.'); // also refuses ids from other rooms
+      replyTo = { id: t.id, senderId: t.senderId, senderName: t.name || 'کاربر', snippet: t.hiddenAt ? '' : [...t.body.replace(/\s+/g, ' ')].slice(0, 100).join(''), hidden: !!t.hiddenAt };
+    }
+    const [m] = await tx.insert(schema.chatMessages).values({ roomId, senderId: userId, body, replyToId: replyTo?.id ?? null }).returning();
     await tx.update(schema.chatRooms).set({ lastMessageAt: m.createdAt }).where(eq(schema.chatRooms.id, roomId));
     await tx.execute(sql`
       INSERT INTO chat_members (room_id, user_id, last_read_seq) VALUES (${roomId}, ${userId}, ${m.seq})
       ON CONFLICT (room_id, user_id) DO UPDATE SET last_read_seq = GREATEST(chat_members.last_read_seq, EXCLUDED.last_read_seq)`);
     const [u] = await tx.select({ name: schema.users.displayName, avatar: schema.users.avatarUrl }).from(schema.users).where(eq(schema.users.id, userId));
     await fanOut(tx, access, userId, u?.name || 'کاربر', body);
-    return { seq: m.seq, id: m.id, senderId: userId, senderName: u?.name || 'کاربر', senderAvatar: u?.avatar ?? null, body, hidden: false, createdAt: m.createdAt.toISOString(), mine: true };
+    return { seq: m.seq, id: m.id, senderId: userId, senderName: u?.name || 'کاربر', senderAvatar: u?.avatar ?? null, body, hidden: false, createdAt: m.createdAt.toISOString(), mine: true, replyTo };
   });
 }
 

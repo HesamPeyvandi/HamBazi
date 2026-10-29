@@ -7,6 +7,7 @@ import { acquireSlot, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { splitShare } from './money';
 import { lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
+import { clearWaitlist, offerFreedSeats, waitlistInfo } from './waitlist';
 import { recordReliability } from '@/server/trust/reliability';
 
 export interface CreateSessionInput {
@@ -80,6 +81,7 @@ export async function joinSession(userId: string, sessionId: string, opts: { inv
       participantId = p.id;
     }
     const intent = await createIntent(tx, { reservationId: res.id, payerUserId: userId, participantId, base: s.pricePerParticipant, feeRule: res.feeSnapshot, venuePayable: s.pricePerParticipant });
+    await clearWaitlist(tx, s.id, userId); // joined => no longer waiting
     return { intentId: intent.id, holdExpiresAt: hold, participantId };
   });
 }
@@ -103,6 +105,7 @@ export async function leaveSession(userId: string, sessionId: string, now = new 
     await tx.update(schema.sessionParticipants).set({ status: 'left', holdExpiresAt: null }).where(eq(schema.sessionParticipants.id, p.id));
     const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(schema.sessionParticipants).where(and(eq(schema.sessionParticipants.sessionId, s.id), eq(schema.sessionParticipants.status, 'confirmed')));
     if (s.status === 'confirmed' && n < s.minToConfirm && now < s.joinDeadline) await tx.update(schema.openSessions).set({ status: 'collecting', version: bump }).where(eq(schema.openSessions.id, s.id));
+    await offerFreedSeats(tx, s.id, now);
     await notify(tx, s.hostUserId, 'participant_left', 'یکی از بازیکنان از سانس خارج شد', '', `/sessions/${s.id}`);
     return { refundPercent: pct };
   });
@@ -166,6 +169,7 @@ export async function getSessionDetail(sessionId: string, viewerId: string | nul
   return {
     session: { ...row.s, inviteToken: isHost ? row.s.inviteToken : undefined }, venue: row.venue, startsAt: row.startsAt, endsAt: row.endsAt, sportName: row.sportName,
     confirmedCount: parts.filter((x) => x.p.status === 'confirmed' || x.p.status === 'attended').length, isHost, isMember,
+    waitlist: await waitlistInfo(viewerId, sessionId),
     myStatus: parts.find((x) => x.p.userId === viewerId)?.p.status ?? null,
     participants: visible.map((x) => ({ userId: x.p.userId, name: x.name, avatar: x.avatar, isHost: x.p.isHost, status: x.p.status, ovr: ovrBy.get(x.p.userId) ?? 50, payment: isHost ? (payBy.get(x.p.id) ?? null) : undefined })),
   };

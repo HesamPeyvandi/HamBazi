@@ -22,6 +22,7 @@ export function Footer() {
           <ul className="space-y-2">
             <li><Link href="/terms" className="hover:text-white">شرایط استفاده</Link></li>
             <li><Link href="/privacy" className="hover:text-white">حریم خصوصی</Link></li>
+            <li><Link href="/help" className="hover:text-white">راهنما و تماس با ما</Link></li>
           </ul>
         </nav>
       </div>

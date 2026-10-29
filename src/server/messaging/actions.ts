@@ -8,10 +8,10 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export type SendResult = { ok: true; message: MessageDTO } | { ok: false; error: string; code: string };
 
 /** Server action (Next enforces same-origin on actions => CSRF-safe). Business failures return a result, never throw. */
-export async function sendMessageAction(roomId: string, body: string): Promise<SendResult> {
+export async function sendMessageAction(roomId: string, body: string, replyToId?: string | null): Promise<SendResult> {
   const u = await requireUser(`/chat/${roomId}`);
   if (!UUID.test(roomId)) return { ok: false, code: 'not_found', error: 'گفت‌وگو پیدا نشد.' };
-  try { return { ok: true, message: await sendMessage(u.id, roomId, body) }; }
+  try { return { ok: true, message: await sendMessage(u.id, roomId, body, replyToId && UUID.test(replyToId) ? replyToId : null) }; }
   catch (e) { if (e instanceof DomainError) return { ok: false, error: e.message, code: e.code }; throw e; }
 }
 export async function muteAction(roomId: string, muted: boolean) {

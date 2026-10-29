@@ -6,6 +6,7 @@ import { DomainError } from './errors';
 import { cancelReservationByPlayer, createFullReservation } from './reservations';
 import { createOpenSession, joinSession, leaveSession, updateSessionDetails } from './sessions';
 import { simulatePay } from './settle';
+import { joinWaitlist, leaveWaitlist } from './waitlist';
 import { markAllRead } from './notifications';
 import { normalizeDigits } from '@/lib/i18n/digits';
 import { db, schema } from '@/db/client';
@@ -72,4 +73,16 @@ export async function markNotificationsReadAction() {
   const u = await requireUser('/notifications');
   await markAllRead(u.id);
   revalidatePath('/notifications');
+}
+
+export async function joinWaitlistAction(sessionId: string, token: string | undefined) {
+  const path = `/sessions/${sessionId}${token ? `?t=${token}` : ''}`;
+  const u = await requireUser(path);
+  await run(path, () => joinWaitlist(u.id, sessionId, { inviteToken: token }));
+  redirect(`/sessions/${sessionId}?ok=waitlisted${token ? `&t=${token}` : ''}`);
+}
+export async function leaveWaitlistAction(sessionId: string) {
+  const u = await requireUser(`/sessions/${sessionId}`);
+  await leaveWaitlist(u.id, sessionId);
+  redirect(`/sessions/${sessionId}?ok=unwaitlisted`);
 }

@@ -22,7 +22,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
   const p = await getPublicProfile(viewer?.id ?? null, id);
   if (!p) notFound();
   if (p.hidden) return (
-    <div className="container-page max-w-2xl py-8"><section className="card p-8 text-center"><div className="mx-auto w-fit"><Avatar src={p.avatar} name={p.name || 'کاربر'} size={88} /></div>
+    <div className="container-page max-w-2xl py-8"><section className="card p-8 text-center"><div className="mx-auto w-fit"><Avatar seed={id} src={p.avatar} name={p.name || 'کاربر'} size={88} /></div>
       <h1 className="mt-3 text-xl font-extrabold">{p.name || 'کاربر'}</h1><p className="mt-2 text-ink-500">این بازیکن پروفایل خود را خصوصی کرده است.</p></section></div>);
   const rel = p.reliability;
   return (

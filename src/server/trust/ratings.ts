@@ -68,6 +68,12 @@ export async function submitPeerReviews(raterId: string, reservationId: string, 
   });
 }
 
+/** Public rating = all reviews that moderation has not hidden. */
+export async function recomputeVenueRating(tx: { execute: (q: ReturnType<typeof sql>) => Promise<unknown> }, venueId: string) {
+  await tx.execute(sql`UPDATE venues SET rating_avg = COALESCE((SELECT round(avg(rating)::numeric, 2) FROM venue_reviews WHERE venue_id = ${venueId} AND hidden_at IS NULL), 0),
+    rating_count = (SELECT count(*) FROM venue_reviews WHERE venue_id = ${venueId} AND hidden_at IS NULL) WHERE id = ${venueId}`);
+}
+
 /** Venue review for a game the user actually attended. Recomputes the venue's public rating from all reviews. */
 export async function submitVenueReview(userId: string, reservationId: string, rating: number, comment: string, now = new Date()) {
   const ctx = await getRateContext(userId, reservationId, now);
@@ -77,8 +83,7 @@ export async function submitVenueReview(userId: string, reservationId: string, r
   return db().transaction(async (tx) => {
     const ins = await tx.insert(schema.venueReviews).values({ venueId: ctx.game.venue.id, userId, reservationId, sessionId: ctx.sessionId, rating, comment: comment.trim().slice(0, 600) }).onConflictDoNothing().returning({ id: schema.venueReviews.id });
     if (!ins.length) throw new DomainError('already_rated', 'قبلاً برای این بازی نظر داده‌اید.');
-    await tx.execute(sql`UPDATE venues SET rating_avg = (SELECT round(avg(rating)::numeric, 2) FROM venue_reviews WHERE venue_id = ${ctx.game.venue.id}),
-      rating_count = (SELECT count(*) FROM venue_reviews WHERE venue_id = ${ctx.game.venue.id}) WHERE id = ${ctx.game.venue.id}`);
+    await recomputeVenueRating(tx, ctx.game.venue.id);
     const mgr = await tx.select({ id: schema.venueManagers.userId }).from(schema.venueManagers).where(eq(schema.venueManagers.venueId, ctx.game.venue.id));
     for (const m of mgr) await notify(tx, m.id, 'venue_review', 'نظر جدید دربارهٔ سالن', '', '/owner/reviews');
   });

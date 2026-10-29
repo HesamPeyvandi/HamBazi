@@ -1,5 +1,5 @@
 import {
-  pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric, bigint,
+  type AnyPgColumn, pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric, bigint,
   uniqueIndex, index, primaryKey, check,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -167,6 +167,8 @@ export const venueReviews = pgTable('venue_reviews', {
   rating: integer('rating').notNull(),
   quality: jsonb('quality').$type<Record<string, number>>().notNull().default({}),
   comment: text('comment').notNull().default(''),
+  hiddenAt: timestamp('hidden_at', { withTimezone: true }), // admin moderation: excluded from public list and rating
+  hiddenBy: uuid('hidden_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: createdAt(),
 }, (t) => [
   check('venue_reviews_rating', sql`${t.rating} BETWEEN 1 AND 5`),
@@ -525,6 +527,7 @@ export const chatMessages = pgTable('chat_messages', {
   createdAt: createdAt(),
   hiddenAt: timestamp('hidden_at', { withTimezone: true }), // moderation: body is no longer shown
   hiddenBy: uuid('hidden_by').references(() => users.id, { onDelete: 'set null' }),
+  replyToId: uuid('reply_to_id').references((): AnyPgColumn => chatMessages.id, { onDelete: 'set null' }), // quoted message (same room, checked in code)
 }, (t) => [
   index('chat_messages_room_seq_idx').on(t.roomId, t.seq),
   index('chat_messages_created_idx').on(t.createdAt), // retention sweep
@@ -547,4 +550,44 @@ export const chatBlocks = pgTable('chat_blocks', {
 }, (t) => [
   primaryKey({ columns: [t.roomId, t.blockerId, t.blockedId] }),
   check('chat_block_not_self', sql`${t.blockerId} <> ${t.blockedId}`),
+]);
+
+/* =====================  PHASE 7: favorites, waiting list, support  ===================== */
+export const favoriteVenues = pgTable('favorite_venues', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
+  createdAt: createdAt(),
+}, (t) => [primaryKey({ columns: [t.userId, t.venueId] })]);
+
+/** Waiting list of a FULL open session. First come, first notified; joining removes the row. */
+export const sessionWaitlist = pgTable('session_waitlist', {
+  sessionId: uuid('session_id').notNull().references(() => openSessions.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: createdAt(),
+  notifiedAt: timestamp('notified_at', { withTimezone: true }),
+}, (t) => [primaryKey({ columns: [t.sessionId, t.userId] }), index('session_waitlist_order_idx').on(t.sessionId, t.createdAt)]);
+
+/** Extra refund when a replacement fills the spot of a player who left late (the original refund row stays untouched). */
+export const refundTopups = pgTable('refund_topups', {
+  id: id(),
+  intentId: uuid('intent_id').notNull().unique().references(() => paymentIntents.id, { onDelete: 'restrict' }),
+  amount: integer('amount').notNull(),
+  mode: paymentModeEnum('mode').notNull(),
+  reason: text('reason').notNull(),
+  createdAt: createdAt(),
+}, (t) => [check('refund_topup_positive', sql`${t.amount} > 0`)]);
+
+export const supportMessages = pgTable('support_messages', {
+  id: id(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  topic: text('topic').notNull(),
+  body: text('body').notNull(),
+  status: text('status').notNull().default('open'), // open | closed
+  resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'set null' }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  index('support_status_idx').on(t.status, t.createdAt),
+  check('support_body_len', sql`char_length(${t.body}) BETWEEN 10 AND 2000`),
+  check('support_status', sql`${t.status} IN ('open','closed')`),
 ]);

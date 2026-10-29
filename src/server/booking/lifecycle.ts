@@ -7,6 +7,7 @@ import { and, eq, lt, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { cancelOpenIntents, notify, notifyManagers, refundIntent, releaseSlot, succeededIntents, type Reservation, type Tx } from './core';
 import { refundPercentFor, hoursUntil } from './money';
+import { clearWaitlist, offerFreedSeats } from './waitlist';
 
 export type SessionRow = typeof schema.openSessions.$inferSelect;
 
@@ -68,6 +69,7 @@ export async function cancelSessionInternal(tx: Tx, s: SessionRow, o: CancelOpts
   await tx.update(schema.reservations).set({ status: refunded ? 'refunded' : o.status, cancelReason: o.reason, cancelledBy: o.by, updatedAt: new Date(), version: inc })
     .where(eq(schema.reservations.id, s.reservationId));
   await releaseSlot(tx, s.slotId);
+  await clearWaitlist(tx, s.id);
 
   const why: Record<string, string> = {
     target_not_met: 'ظرفیت سانس تا مهلت تعیین‌شده تکمیل نشد.', host_unpaid: 'میزبان در مهلت مقرر هزینهٔ خود را پرداخت نکرد.',
@@ -91,6 +93,7 @@ export async function processSession(tx: Tx, sessionId: string, now = new Date()
     await cancelOpenIntents(tx, s.reservationId, p.id);
     await tx.update(schema.sessionParticipants).set({ status: 'expired', holdExpiresAt: null }).where(eq(schema.sessionParticipants.id, p.id));
   }
+  if (stale.some((p) => !p.isHost)) await offerFreedSeats(tx, s.id, now);
   // 2. host never paid => session never opens
   if (s.status === 'collecting' && stale.some((p) => p.isHost)) {
     return cancelSessionInternal(tx, s, { by: 'system', reason: 'host_unpaid', status: 'expired' });

@@ -7,7 +7,7 @@ import { currentUser } from '@/server/auth/session';
 import { getSessionDetail } from '@/server/booking/sessions';
 import { teamsOfUser } from '@/server/teams';
 import { inviteTeamToSessionAction } from '@/server/teams/actions';
-import { joinSessionAction, leaveSessionAction, updateSessionAction, cancelReservationAction } from '@/server/booking/actions';
+import { joinSessionAction, leaveSessionAction, updateSessionAction, cancelReservationAction, joinWaitlistAction, leaveWaitlistAction } from '@/server/booking/actions';
 import { env } from '@/server/env';
 import { Avatar } from '@/components/ui/misc';
 import { formatToman, toFa } from '@/lib/i18n/digits';
@@ -15,7 +15,7 @@ import { formatJalaliDateTime, formatJalaliWithWeekday, formatTime } from '@/lib
 import { PAY_STATUS, SESSION_STATUS } from '@/lib/labels';
 
 const UUID = /^[0-9a-f-]{36}$/i;
-const OK: Record<string, string> = { team_invited: 'دعوت برای اعضای تیم ارسال شد.', paid: 'پرداخت (شبیه‌سازی‌شده) انجام شد.', left: 'از سانس خارج شدید.', left_refund: 'از سانس خارج شدید و بازگشت وجه (شبیه‌سازی‌شده) ثبت شد.', updated: 'تغییرات ذخیره شد.' };
+const OK: Record<string, string> = { team_invited: 'دعوت برای اعضای تیم ارسال شد.', paid: 'پرداخت (شبیه‌سازی‌شده) انجام شد.', left: 'از سانس خارج شدید.', left_refund: 'از سانس خارج شدید و بازگشت وجه (شبیه‌سازی‌شده) ثبت شد.', updated: 'تغییرات ذخیره شد.', waitlisted: 'به لیست انتظار اضافه شدید؛ با خالی شدن جا به شما اعلان می‌دهیم.', unwaitlisted: 'از لیست انتظار خارج شدید.' };
 
 export default async function SessionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string; ok?: string; err?: string }> }) {
   const { id } = await params;
@@ -55,7 +55,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
       <section className="card mt-5 p-6" aria-labelledby="players-t">
         <h2 id="players-t" className="section-title mb-3">بازیکنان</h2>
         <ul className="divide-y divide-line">{d.participants.map((p) => (
-          <li key={p.userId} className="flex items-center gap-3 py-3"><Avatar src={p.avatar} name={p.name || 'کاربر'} size={40} />
+          <li key={p.userId} className="flex items-center gap-3 py-3"><Avatar seed={p.userId} src={p.avatar} name={p.name || 'کاربر'} size={40} />
             <div className="min-w-0"><p className="font-bold"><Link href={`/players/${p.userId}`} className="hover:text-brand-600">{p.name || 'کاربر'}</Link>{p.isHost && <span className="pill pill-green ms-2">میزبان</span>}</p><p className="text-xs text-ink-500">OVR {toFa(p.ovr)}</p></div>
             {p.payment !== undefined && <span className="pill pill-info ms-auto">{PAY_STATUS[p.payment ?? 'created'] ?? '—'}</span>}</li>))}</ul>
       </section>
@@ -65,7 +65,13 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
         {d.myStatus === 'confirmed' && <Link className="btn btn-outline w-full" href={`/chat/session/${s.id}`}>گفت‌وگوی بازیکنان این سانس</Link>}
         {d.myStatus === 'pending_payment' && !d.isHost && <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-fg">پرداخت شما هنوز تکمیل نشده است. دوباره «پیوستن» را بزنید.</p>}
         {d.myStatus === 'confirmed' && !d.isHost && active && <form action={leaveSessionAction.bind(null, s.id)}><button className="btn btn-ghost w-full">خروج از سانس (طبق سیاست لغو)</button></form>}
-        {full && !d.isMember && active && <p className="rounded-xl bg-page p-3 text-center text-ink-700">ظرفیت این سانس تکمیل است.</p>}
+        {full && !d.isMember && active && (
+          <div className="rounded-xl bg-page p-3 text-center text-ink-700">
+            <p>ظرفیت این سانس تکمیل است{d.waitlist.count > 0 ? ` · ${toFa(d.waitlist.count)} نفر در لیست انتظار` : ''}.</p>
+            {!user ? <Link className="btn btn-outline mt-2 w-full" href={`/login?next=${encodeURIComponent(`/sessions/${s.id}`)}`}>ورود برای لیست انتظار</Link>
+              : d.waitlist.position ? <form action={leaveWaitlistAction.bind(null, s.id)} className="mt-2"><p className="mb-2 text-sm font-bold text-brand-700">{d.waitlist.notified ? 'جا برای شما خالی شد؛ همین حالا بپیوندید!' : `نوبت شما: ${toFa(d.waitlist.position)}`}</p><button className="btn btn-ghost w-full">خروج از لیست انتظار</button></form>
+              : <form action={joinWaitlistAction.bind(null, s.id, q.t)} className="mt-2"><button className="btn btn-outline w-full">پیوستن به لیست انتظار</button></form>}
+          </div>)}
       </div>
       {d.isHost && (
         <section className="card mt-5 p-6" aria-labelledby="host-t"><h2 id="host-t" className="section-title mb-3">مدیریت سانس (میزبان)</h2>

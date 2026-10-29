@@ -8,7 +8,7 @@ import { sha256 } from '@/server/auth/crypto';
  * attendance results) are never optional, so a user can never miss money-related news.
  */
 export const NOTIF_GROUPS = {
-  sessions: { label: 'سانس‌های باز من', hint: 'پیوستن و خروج بازیکنان، تأیید قطعی سانس', types: ['participant_joined', 'participant_left', 'session_confirmed', 'session_published'] },
+  sessions: { label: 'سانس‌های باز من', hint: 'پیوستن و خروج بازیکنان، تأیید قطعی سانس', types: ['participant_joined', 'participant_left', 'session_confirmed', 'session_published', 'waitlist_spot'] },
   rating: { label: 'امتیاز و نظر', hint: 'یادآوری امتیازدهی بعد از بازی و امتیازهایی که دریافت می‌کنید', types: ['rate_game', 'peer_rated'] },
   teams: { label: 'تیم‌ها', hint: 'درخواست عضویت، دعوت‌ها و اعلان‌های تیم', types: ['team_member', 'team_request', 'team_request_result', 'team_invite', 'team_session'] },
   chat: { label: 'پیام‌های گفت‌وگو', hint: 'اعلان پیام جدید در گفت‌وگوی سانس‌ها و تیم‌ها (حداکثر یک اعلان خوانده‌نشده برای هر گفت‌وگو)', types: ['chat_message'] },

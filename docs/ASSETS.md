@@ -8,7 +8,6 @@
 | Hero | `public/img/hero.jpg` | "Futsal footwork under arena lights". |
 | Hall photos | `public/img/hall-a.jpg … hall-d.jpg` | Four empty futsal arenas, 1586 px wide, JPEG q80. |
 | Locker rooms | `public/img/locker.jpg`, `shower.jpg`, `stands.jpg` | Three locker-room photos. The file names are historical (seed keys); the content is "locker room" for all three. |
-| Player portrait | `public/img/player.jpg` | Spare vertical image (not yet used in a page). |
 | Avatars | `public/img/avatars/p1.jpg … p20.jpg` | 20 portraits cropped from the supplied grid, 256×256. |
 
 ## Still needed from the owner

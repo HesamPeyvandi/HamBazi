@@ -26,7 +26,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <section className="card overflow-hidden">
         <div className="relative bg-gradient-to-l from-brand-800 to-brand-950 p-6 text-white">
           <div className="flex items-center gap-4">
-            <Avatar src={user.avatarUrl} name={user.displayName} size={88} />
+            <Avatar seed={user.id} src={user.avatarUrl} name={user.displayName} size={88} />
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-extrabold">{user.displayName}</h1>
               <p className="mt-1 flex flex-wrap items-center gap-3 text-sm text-white/80">
@@ -66,7 +66,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         </section>
       ))}
 
-      <p className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-brand-600"><Link href="/profile/commitment">تعهد و تاریخچه</Link><Link href={`/players/${user.id}`}>مشاهدهٔ پروفایل عمومی من</Link><Link href="/settings">تنظیمات</Link></p>
+      <p className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-brand-600"><Link href="/profile/commitment">تعهد و تاریخچه</Link><Link href={`/players/${user.id}`}>مشاهدهٔ پروفایل عمومی من</Link><Link href="/favorites">علاقه‌مندی‌ها</Link><Link href="/chat">گفت‌وگوها</Link><Link href="/settings">تنظیمات</Link><Link href="/help">راهنما و تماس</Link></p>
 
       <form action={logoutAction} className="mt-6"><button className="btn btn-danger w-full"><LogOut className="h-4 w-4" aria-hidden />خروج از حساب</button></form>
     </div>

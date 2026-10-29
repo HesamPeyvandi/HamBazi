@@ -1,3 +1,5 @@
+import { currentUser } from '@/server/auth/session';
+import { favoriteIds } from '@/server/favorites';
 import Link from 'next/link';
 import { ShieldCheck, Star, Users, Zap, ArrowLeft, Volleyball, LayoutGrid } from 'lucide-react';
 import { SearchBar } from '@/components/venues/SearchBar';
@@ -15,20 +17,21 @@ const BENEFITS = [
 
 export default async function HomePage() {
   const [cities, sports, venues] = await Promise.all([getCities(), getSportsList(), featuredVenues('semnan', 4)]);
+  const me = await currentUser(); const favs = me ? await favoriteIds(me.id) : null;
   return (
     <>
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hero.jpg" alt="" aria-hidden className="absolute inset-y-0 end-0 -z-10 hidden h-full w-[48%] object-cover opacity-90 lg:block [mask-image:linear-gradient(to_right,black_55%,transparent)]" />
+        <img src="/img/hero.jpg" alt="" aria-hidden className="absolute inset-y-0 end-0 -z-10 hidden h-full w-[48%] object-cover lg:block [mask-image:linear-gradient(to_right,black_75%,transparent)]" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hall-a.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover opacity-45 lg:hidden" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-brand-950 via-brand-950/40 to-brand-950/70 lg:bg-gradient-to-l lg:from-brand-950/90 lg:via-brand-950/40 lg:to-transparent" />
+        <img src="/img/hall-a.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover opacity-90 lg:hidden" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-brand-950/75 via-brand-950/5 to-brand-950/35 lg:bg-gradient-to-l lg:from-brand-950/55 lg:via-brand-950/10 lg:to-transparent" />
         <div className="container-page pb-10 pt-12 lg:pb-20 lg:pt-20">
           <div className="max-w-xl lg:ms-0">
-            <h1 className="text-[2rem] font-extrabold leading-[1.35] sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="[text-shadow:0_2px_14px_rgb(0_0_0/0.55)] text-[2rem] font-extrabold leading-[1.35] sm:text-5xl lg:text-[3.4rem]">
               سالن رو پیدا کن،<br /><span className="text-accent">هم‌بازیت رو هم.</span>
             </h1>
-            <p className="mt-4 max-w-md text-[0.95rem] leading-8 text-white/80">رزرو آسان سالن‌های ورزشی، پیدا کردن هم‌بازی و پرداخت مطمئن؛ همه در یک پلتفرم.</p>
+            <p className="mt-4 max-w-md text-[0.95rem] leading-8 text-white/90 [text-shadow:0_1px_8px_rgb(0_0_0/0.6)]">رزرو آسان سالن‌های ورزشی، پیدا کردن هم‌بازی و پرداخت مطمئن؛ همه در یک پلتفرم.</p>
           </div>
           <div className="mt-8 lg:mt-12"><SearchBar cities={cities} sports={sports} /></div>
           <ul className="mt-6 flex justify-center gap-8 lg:hidden" aria-label="ورزش‌ها">
@@ -62,7 +65,7 @@ export default async function HomePage() {
           <Link href="/venues" className="inline-flex items-center gap-1 text-sm font-bold text-brand-600">مشاهده همه <ArrowLeft className="h-4 w-4" aria-hidden /></Link>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {venues.map((v) => <VenueGridCard key={v.id} v={v} />)}
+          {venues.map((v) => <VenueGridCard key={v.id} v={v} fav={favs ? favs.has(v.id) : null} />)}
         </div>
       </section>
 

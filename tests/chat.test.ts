@@ -232,6 +232,38 @@ describe('reporting and moderation', () => {
   });
 });
 
+describe('replies', () => {
+  it('reply carries a quote; foreign-room / unknown ids are refused; blocked and hidden originals are masked; purge nulls the link', async () => {
+    const h = await mkUser(); const a = await mkUser(); const sid = await session(h, [a]); const room = await ensureRoom(h, 'session', sid);
+    const other = await ensureRoom(h, 'session', await session(h));
+    const orig = await sendMessage(a, room, 'متن اصلی');
+    const foreign = await sendMessage(h, other, 'اتاق دیگر');
+    const rep = await sendMessage(h, room, 'پاسخ من', orig.id);
+    expect(rep.replyTo).toMatchObject({ id: orig.id, senderId: a, snippet: 'متن اصلی', hidden: false });
+    expect(await code(sendMessage(h, room, 'x', foreign.id))).toBe('invalid');
+    expect(await code(sendMessage(h, room, 'x', '00000000-0000-0000-0000-000000000000'))).toBe('invalid');
+    const seen = (await getMessages(a, room)).messages.find((m) => m.id === rep.id)!;
+    expect(seen.replyTo?.snippet).toBe('متن اصلی');
+    await setBlocked(h, room, a, true);
+    const masked = (await getMessages(h, room)).messages.find((m) => m.id === rep.id)!;
+    expect(masked.replyTo).toMatchObject({ hidden: true, snippet: '' });
+    await setBlocked(h, room, a, false);
+    await sqlClient()`UPDATE chat_messages SET hidden_at = now() WHERE id = ${orig.id}`;
+    expect((await getMessages(h, room)).messages.find((m) => m.id === rep.id)!.replyTo).toMatchObject({ hidden: true, snippet: '' });
+    await sqlClient()`UPDATE chat_messages SET created_at = now() - interval '200 days' WHERE id = ${orig.id}`;
+    await purgeOldMessages();
+    expect((await getMessages(h, room)).messages.find((m) => m.id === rep.id)!.replyTo).toBeNull();
+  });
+});
+
+describe('identity colour', () => {
+  it('is stable per id and spreads over the palette', async () => {
+    const { identityColor } = await import('@/lib/ui/identity-color');
+    expect(identityColor('abc')).toBe(identityColor('abc'));
+    expect(new Set(Array.from({ length: 200 }, (_, i) => identityColor(`user-${i}`).name)).size).toBeGreaterThanOrEqual(8);
+  });
+});
+
 describe('retention', () => {
   it('deletes only messages older than 90 days and is idempotent', async () => {
     const h = await mkUser(); const room = await ensureRoom(h, 'session', await session(h));

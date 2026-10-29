@@ -73,3 +73,13 @@
 - `chat_members(room_id, user_id, last_read_seq, muted)` — فقط وضعیت خواندن/بی‌صدا، **نه** عضویت.
 - `chat_blocks(room_id, blocker_id, blocked_id)` — CHECK غیر خود.
 - `reports.target_type` اکنون شامل `message`.
+
+
+## افزوده‌های فاز ۷ (مهاجرت‌های 0008 و 0009)
+- `chat_messages.reply_to_id` (0009): کلید خارجی به همان جدول، `ON DELETE SET NULL`؛ پاسخ فقط به پیام همان اتاق مجاز است (در سرور بررسی می‌شود).
+- `favorite_venues(user_id, venue_id, created_at)` — کلید ترکیبی؛ فقط سالن‌های منتشرشده در لیست دیده می‌شوند.
+- `session_waitlist(session_id, user_id, created_at, notified_at?)` — کلید ترکیبی؛ سقف ۲۰ نفر برای هر سانس؛ هنگام آزاد شدن جا، اولین‌ها یک‌بار اعلان می‌گیرند.
+- `refund_topups(id, intent_id UNIQUE, amount, mode, reason)` — بازپرداخت مابه‌التفاوت جدا از ردیف `refunds` (آن ردیف هرگز ویرایش نمی‌شود).
+- `support_messages(id, user_id, topic, body, status open|closed, resolved_by?, resolved_at?)`.
+- `venue_reviews.hidden_at/hidden_by` — نظر پنهان‌شده در میانگین امتیاز و صفحه‌های عمومی حساب نمی‌شود.
+- `venue_managers.role` (owner|staff) از قبل وجود داشت؛ اکنون برای دسترسی کارمند استفاده می‌شود.

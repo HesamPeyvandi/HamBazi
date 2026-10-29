@@ -1,3 +1,4 @@
+import { identityColor } from '@/lib/ui/identity-color';
 import Link from 'next/link';
 import { Star, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatDecimal, formatNumber, toFa } from '@/lib/i18n/digits';
@@ -22,11 +23,12 @@ export function Stars({ value }: { value: number }) {
   );
 }
 
-export function Avatar({ src, name, size = 40 }: { src?: string | null; name: string; size?: number }) {
+export function Avatar({ src, name, size = 40, seed }: { src?: string | null; name: string; size?: number; seed?: string }) {
+  const c = identityColor(seed || name || '؟');
   const initials = (name || '؟').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('‌');
   // eslint-disable-next-line @next/next/no-img-element
   return src ? <img src={src} alt="" width={size} height={size} className="rounded-full object-cover bg-brand-50" style={{ width: size, height: size }} loading="lazy" />
-    : <span className="inline-flex items-center justify-center rounded-full bg-brand-100 text-brand-700 font-bold" style={{ width: size, height: size, fontSize: size * 0.4 }} aria-hidden>{initials}</span>;
+    : <span className="inline-flex items-center justify-center rounded-full font-bold" style={{ width: size, height: size, fontSize: size * 0.4, backgroundColor: c.bg, color: c.fg }} aria-hidden>{initials}</span>;
 }
 
 export function Pagination({ page, total, pageSize, hrefFor }: { page: number; total: number; pageSize: number; hrefFor: (p: number) => string }) {

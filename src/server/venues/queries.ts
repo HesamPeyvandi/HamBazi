@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { jalaliToUtc, tehranParts, tehranWallToUtc } from '@/lib/i18n/jalali';
 
@@ -83,7 +83,7 @@ export async function searchVenues(f: VenueFilters) {
   return { items: rows.map((r) => byId.get(r.id)!).filter(Boolean), total, page, pageSize: PAGE_SIZE };
 }
 
-async function hydrate(ids: string[], f?: VenueFilters): Promise<VenueCard[]> {
+export async function hydrate(ids: string[], f?: VenueFilters): Promise<VenueCard[]> {
   if (!ids.length) return [];
   const d = db();
   const [venues, images, sportRows, facs, cities] = await Promise.all([
@@ -131,7 +131,7 @@ export async function getVenueBySlug(slug: string) {
     d.select({ id: schema.venueReviews.id, rating: schema.venueReviews.rating, comment: schema.venueReviews.comment, createdAt: schema.venueReviews.createdAt,
       name: schema.users.displayName, avatar: schema.users.avatarUrl })
       .from(schema.venueReviews).innerJoin(schema.users, eq(schema.users.id, schema.venueReviews.userId))
-      .where(eq(schema.venueReviews.venueId, v.id)).orderBy(desc(schema.venueReviews.createdAt)).limit(20),
+      .where(and(eq(schema.venueReviews.venueId, v.id), isNull(schema.venueReviews.hiddenAt))).orderBy(desc(schema.venueReviews.createdAt)).limit(20),
     d.select().from(schema.cities).where(eq(schema.cities.id, v.cityId)).limit(1),
   ]);
   const dist = [5, 4, 3, 2, 1].map((s) => ({ stars: s, count: reviews.filter((r) => r.rating === s).length }));

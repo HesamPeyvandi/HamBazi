@@ -4,6 +4,7 @@ import { publicUrl } from '@/server/storage';
 import { FACILITIES } from '@/lib/facilities';
 import { formatDecimal, formatNumber, formatToman } from '@/lib/i18n/digits';
 import { formatTime, formatJalaliWithWeekday } from '@/lib/i18n/jalali';
+import { toggleFavoriteAction } from '@/server/favorites/actions';
 import type { VenueCard as VC } from '@/server/venues/queries';
 
 export const FAC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -22,15 +23,27 @@ export function FacilityTags({ keys, max = 4 }: { keys: string[]; max?: number }
   );
 }
 
-export function VenueGridCard({ v }: { v: VC }) {
+/** Heart outside the card link (a button must not live inside an <a>). fav: true/false for a signed-in user, null for visitors. */
+export function FavButton({ venueId, fav }: { venueId: string; fav?: boolean | null }) {
+  const cls = 'absolute end-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-ink-700 shadow-sm hover:bg-white focus-visible:outline-2';
+  if (fav === undefined || fav === null) return <Link href="/login?next=/favorites" aria-label="ورود برای ذخیرهٔ سالن" className={cls}><Heart className="h-5 w-5" aria-hidden /></Link>;
   return (
-    <article className="card group flex flex-col overflow-hidden">
+    <form action={toggleFavoriteAction.bind(null, venueId, !fav)}>
+      <button className={cls} aria-label={fav ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} aria-pressed={fav}>
+        <Heart className={`h-5 w-5 ${fav ? 'text-danger-fg' : ''}`} fill={fav ? 'currentColor' : 'none'} aria-hidden /></button>
+    </form>
+  );
+}
+
+export function VenueGridCard({ v, fav }: { v: VC; fav?: boolean | null }) {
+  return (
+    <article className="card group relative flex flex-col overflow-hidden">
+      <FavButton venueId={v.id} fav={fav} />
       <Link href={`/venues/${v.slug}`} className="relative block aspect-[16/10] overflow-hidden bg-brand-50" aria-label={`مشاهدهٔ ${v.name}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute start-3 bottom-3 inline-flex items-center gap-1 rounded-lg bg-brand-600 px-2 py-1 text-xs font-bold text-white">
           <Star className="h-3.5 w-3.5" fill="#fff" aria-hidden />{formatDecimal(v.ratingAvg)}</span>
-        <span className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-ink-700" aria-hidden><Heart className="h-5 w-5" /></span>
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className="text-lg font-extrabold leading-snug"><Link href={`/venues/${v.slug}`}>{v.name}</Link></h3>
@@ -48,14 +61,16 @@ export function VenueGridCard({ v }: { v: VC }) {
   );
 }
 
-export function VenueListItem({ v }: { v: VC }) {
+export function VenueListItem({ v, fav }: { v: VC; fav?: boolean | null }) {
   return (
-    <article className="card flex flex-col gap-4 overflow-hidden p-3 sm:flex-row sm:items-stretch">
-      <Link href={`/venues/${v.slug}`} className="relative block aspect-[16/10] shrink-0 overflow-hidden rounded-xl sm:aspect-auto sm:w-64" aria-label={`مشاهدهٔ ${v.name}`}>
+    <article className="card relative flex flex-col gap-4 overflow-hidden p-3 sm:flex-row sm:items-stretch">
+      <div className="relative shrink-0 sm:w-64">
+      <FavButton venueId={v.id} fav={fav} />
+      <Link href={`/venues/${v.slug}`} className="relative block aspect-[16/10] h-full overflow-hidden rounded-xl sm:aspect-auto" aria-label={`مشاهدهٔ ${v.name}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} loading="lazy" className="h-full w-full object-cover" />
-        <span className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-ink-700" aria-hidden><Heart className="h-5 w-5" /></span>
       </Link>
+      </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2 py-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xl font-extrabold"><Link href={`/venues/${v.slug}`}>{v.name}</Link></h3>

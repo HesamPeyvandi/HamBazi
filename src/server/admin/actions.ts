@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation';
 import { requireRole } from '@/server/auth/rbac';
 import { DomainError } from '@/server/booking/errors';
 import { normalizeDigits } from '@/lib/i18n/digits';
+import { audit } from '@/server/audit';
+import { cancelReservationByVenue } from '@/server/booking/reservations';
+import { setReviewHidden } from './oversight';
 import { createCancellationPolicy, createFeePolicy, setUserStatus, setVenueSuspended, updateSetting } from './index';
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -38,4 +41,18 @@ export async function createCancellationPolicyAction(fd: FormData) {
     .map((t) => ({ minHoursBefore: num(t.h), refundPercent: num(t.p) }));
   await run('/admin/settings', () => createCancellationPolicy(a, tiers));
   redirect('/admin/settings?ok=1');
+}
+
+export async function setReviewHiddenAction(reviewId: string, hide: boolean, fd: FormData) {
+  const a = await requireRole(['admin']);
+  if (!UUID.test(reviewId)) redirect('/admin/reviews');
+  await run('/admin/reviews', () => setReviewHidden(a, reviewId, hide, String(fd.get('note') ?? '')));
+  redirect(`/admin/reviews${hide ? '' : '?hidden=1'}${hide ? '?ok=1' : '&ok=1'}`);
+}
+export async function adminCancelReservationAction(reservationId: string) {
+  const a = await requireRole(['admin']);
+  if (!UUID.test(reservationId)) redirect('/admin/sessions');
+  await run('/admin/sessions?view=reservations', () => cancelReservationByVenue(a, reservationId));
+  await audit(a.id, 'reservation.admin_cancel', 'reservation', reservationId, {});
+  redirect('/admin/sessions?view=reservations&ok=1');
 }

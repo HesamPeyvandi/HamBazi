@@ -27,7 +27,7 @@ export default async function OwnerHome({ searchParams }: { searchParams: Promis
   return (
     <div className="container-page max-w-5xl py-8">
       <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-extrabold">پنل مالک سالن</h1>
-        <div className="flex flex-wrap gap-2"><Link href="/owner/reservations" className="btn btn-outline btn-sm">رزروها</Link><Link href="/owner/attendance" className="btn btn-outline btn-sm">حضور و غیاب</Link><Link href="/owner/reviews" className="btn btn-outline btn-sm">نظرات</Link>{u.role === 'admin' && <><Link href="/admin" className="btn btn-outline btn-sm">پنل ادمین</Link></>}<Link href="/owner/venues/new" className="btn btn-primary btn-sm">ثبت سالن جدید</Link></div></div>
+        <div className="flex flex-wrap gap-2"><Link href="/owner/reservations" className="btn btn-outline btn-sm">رزروها</Link><Link href="/owner/sessions" className="btn btn-outline btn-sm">سانس‌های باز</Link><Link href="/owner/attendance" className="btn btn-outline btn-sm">حضور و غیاب</Link><Link href="/owner/reviews" className="btn btn-outline btn-sm">نظرات</Link>{u.role === 'admin' && <><Link href="/admin" className="btn btn-outline btn-sm">پنل ادمین</Link></>}<Link href="/owner/venues/new" className="btn btn-primary btn-sm">ثبت سالن جدید</Link></div></div>
       {stats && (
         <section className="mt-6" aria-labelledby="stats-t">
           <div className="flex flex-wrap items-center justify-between gap-3"><h2 id="stats-t" className="section-title">آمار و درآمد</h2>

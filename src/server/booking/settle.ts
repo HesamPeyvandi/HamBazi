@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { notify, notifyManagers, recordEvent } from './core';
 import { DomainError, E } from './errors';
+import { topUpReplacedLeaver } from './waitlist';
 import { expireStaleForSlot, lockSession, lockSlot, processSession } from './lifecycle';
 
 type Result = { ok: true; already: boolean; reservationId: string; sessionId?: string } | { ok: false; error: DomainError };
@@ -46,6 +47,7 @@ export async function simulatePay(userId: string, intentId: string, now = new Da
       await notifyManagers(tx, res0.venueId, 'reservation_new', 'سانس باز جدید', 'یک سانس باز برای سالن شما ایجاد شد.', '/owner/reservations');
     } else {
       await notify(tx, sess.hostUserId, 'participant_joined', 'بازیکن جدید به سانس پیوست', '', `/sessions/${sess.id}`);
+      await topUpReplacedLeaver(tx, sess.id, userId);
     }
     const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(schema.sessionParticipants).where(and(eq(schema.sessionParticipants.sessionId, sess.id), eq(schema.sessionParticipants.status, 'confirmed')));
     [sess] = await tx.select().from(schema.openSessions).where(eq(schema.openSessions.id, sess.id));

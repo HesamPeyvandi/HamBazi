@@ -1,5 +1,5 @@
 import Link from 'next/link';
-const ITEMS = [['/admin', 'نمای کلی'], ['/admin/venues', 'سالن‌ها'], ['/admin/users', 'کاربران'], ['/admin/reports', 'گزارش‌ها'], ['/admin/settings', 'تنظیمات'], ['/admin/audit', 'لاگ تغییرات']] as const;
+const ITEMS = [['/admin', 'نمای کلی'], ['/admin/venues', 'سالن‌ها'], ['/admin/users', 'کاربران'], ['/admin/sessions', 'سانس‌ها و رزروها'], ['/admin/reviews', 'نظرات'], ['/admin/reports', 'گزارش‌ها'], ['/admin/support', 'پشتیبانی'], ['/admin/settings', 'تنظیمات'], ['/admin/audit', 'لاگ تغییرات']] as const;
 export function AdminNav({ current }: { current: string }) {
   return (
     <nav aria-label="پنل ادمین" className="mb-5 flex flex-wrap gap-2">

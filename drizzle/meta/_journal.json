@@ -57,6 +57,20 @@
       "when": 1793222673432,
       "tag": "0007_chat_phase6",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793255233118,
+      "tag": "0008_phase7_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793271893557,
+      "tag": "0009_chat_reply",
+      "breakpoints": true
     }
   ]
 }
