@@ -6,7 +6,7 @@ import { REPORT_REASONS } from '@/server/trust/reports';
 
 export const metadata = { title: 'گزارش تخلف' };
 const UUID = /^[0-9a-f-]{36}$/i;
-const TYPE_FA: Record<string, string> = { user: 'بازیکن', venue: 'سالن', session: 'سانس' };
+const TYPE_FA: Record<string, string> = { user: 'بازیکن', venue: 'سالن', session: 'سانس', message: 'پیام' };
 
 export default async function ReportPage({ searchParams }: { searchParams: Promise<{ type?: string; id?: string; err?: string; done?: string }> }) {
   const q = await searchParams;

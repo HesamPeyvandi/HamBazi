@@ -1,15 +1,21 @@
-# فایل‌هایی که از شما لازم دارم (برای جایگزینی تصاویر و فونت نمونه)
+# Assets (logo, photos, font)
 
-فعلاً از برش‌های مرجع UI به‌عنوان **نمونه** استفاده شده است. هرگاه آماده بودید، فایل‌ها را بفرستید؛ نام‌گذاری زیر را رعایت کنید تا جایگزینی بدون تغییر کد انجام شود.
-
-| چه | پوشه/نام | مشخصات پیشنهادی |
+## Delivered and integrated (Phase 6 session)
+| Asset | Where it lives | Notes |
 |---|---|---|
-| لوگوی اصلی (SVG ترجیحاً) | فایل را بفرستید؛ من در `src/components/ui/Logo.tsx` جایگزین می‌کنم | بردار؛ پس‌زمینهٔ شفاف، نسخهٔ روشن و تیره |
-| آیکن برنامه / favicon | فعلاً وجود ندارد؛ بفرستید تا اضافه شود (`src/app/icon.png`) | مربع ≥ ۵۱۲×۵۱۲ |
-| تصویر هیرو صفحهٔ اصلی | `public/img/hero.jpg` | ≥ ۲۴۰۰×۱۰۰۰، سبک و بهینه |
-| عکس سالن‌ها | از پنل مالک آپلود می‌شود | JPG/PNG/WebP تا ۴MB، ترجیحاً افقی ۱۶:۹ |
-| عکس‌های seed دمو | `public/img/hall-*.jpg` و `locker/shower/stands` | همان نام‌ها را جایگزین کنید |
-| آواتار نمونه | `public/img/avatars/p*.jpg` | مربع ۲۵۶×۲۵۶ |
-| فونت | `public/fonts/brand/` + `src/styles/font.css` | راهنما: `docs/FONT.md` |
+| Logo | `src/components/ui/Logo.tsx` (inline SVG path), `public/img/logo.svg` | Re-traced from `Green Teamwork Sports Logo.png` into one clean vector path (no background). Colour is a prop (`#10824B` on light, `#2ee07a` on dark). |
+| App icon / favicon | `src/app/icon.png` (512), `src/app/apple-icon.png` (180) | Generated from the logo on a white rounded square. |
+| Hero | `public/img/hero.jpg` | "Futsal footwork under arena lights". |
+| Hall photos | `public/img/hall-a.jpg … hall-d.jpg` | Four empty futsal arenas, 1586 px wide, JPEG q80. |
+| Locker rooms | `public/img/locker.jpg`, `shower.jpg`, `stands.jpg` | Three locker-room photos. The file names are historical (seed keys); the content is "locker room" for all three. |
+| Player portrait | `public/img/player.jpg` | Spare vertical image (not yet used in a page). |
+| Avatars | `public/img/avatars/p1.jpg … p20.jpg` | 20 portraits cropped from the supplied grid, 256×256. |
 
-قبل از انتشار واقعی: هر عکسی که حق استفاده‌اش را ندارید (مثلاً برش‌های مرجع) باید حذف یا جایگزین شود.
+## Still needed from the owner
+| What | Where | Spec |
+|---|---|---|
+| Brand font (optional) | `public/fonts/brand/` + `src/styles/font.css` | See `docs/FONT.md`. Vazirmatn is used until then. |
+| PWA icons 192/512 maskable | `public/icons/` (Phase 8) | Square, ≥ 512×512. |
+| Real venue photos | uploaded through the owner panel | JPG/PNG/WebP ≤ 4 MB, 16:9 preferred. |
+
+Before a public launch: confirm that you hold the rights to every supplied image (they look AI-generated); the portraits are fictional people, not real users.

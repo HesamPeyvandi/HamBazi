@@ -3,13 +3,15 @@ import { db, schema } from '@/db/client';
 import { audit } from '@/server/audit';
 import { notify } from '@/server/booking/core';
 import { DomainError, E } from '@/server/booking/errors';
+import { hideMessage, messageSender } from '@/server/messaging';
 import type { Actor } from '@/server/owner/venues';
 
 export const REPORT_REASONS: Record<string, string> = { abuse: 'رفتار نامناسب یا توهین', no_show: 'غیبت یا تعهدشکنی', fake: 'اطلاعات نادرست یا کلاهبرداری', safety: 'مسائل ایمنی', other: 'سایر' };
-export const REPORT_TYPES = ['user', 'venue', 'session'] as const;
+export const REPORT_TYPES = ['user', 'venue', 'session', 'message'] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];
 
 async function targetExists(type: ReportType, id: string) {
+  if (type === 'message') { const [m] = await db().select({ id: schema.chatMessages.id }).from(schema.chatMessages).where(eq(schema.chatMessages.id, id)); return !!m; }
   const t = type === 'user' ? schema.users : type === 'venue' ? schema.venues : schema.openSessions;
   const [r] = await db().select({ id: t.id }).from(t).where(eq(t.id, id));
   return !!r;
@@ -35,19 +37,29 @@ export async function listReports(admin: Actor, status: 'open' | 'resolved' | 'd
 }
 
 /** Admin decision. Optionally suspends the reported user (sessions revoked immediately). Always audit-logged. */
-export async function resolveReport(admin: Actor, reportId: string, decision: 'resolved' | 'dismissed', note: string, suspendUser = false) {
+export async function resolveReport(admin: Actor, reportId: string, decision: 'resolved' | 'dismissed', note: string, suspendUser = false, hideMsg = false) {
   if (admin.role !== 'admin') throw E.forbidden();
   return db().transaction(async (tx) => {
     const [r] = await tx.select().from(schema.reports).where(eq(schema.reports.id, reportId)).for('update');
     if (!r) throw E.notFound();
     if (r.status !== 'open') throw E.badState();
-    if (suspendUser) {
+    if (hideMsg) {
+      if (r.targetType !== 'message') throw E.invalid('پنهان‌سازی فقط برای گزارش پیام ممکن است.');
+      await hideMessage(tx, admin.id, r.targetId);
+    }
+    if (suspendUser && r.targetType === 'message') {
+      const sender = await messageSender(tx, r.targetId);
+      if (sender) {
+        await tx.update(schema.users).set({ status: 'suspended' }).where(and(eq(schema.users.id, sender), eq(schema.users.role, 'player')));
+        await tx.update(schema.userSessions).set({ revokedAt: new Date() }).where(eq(schema.userSessions.userId, sender));
+      }
+    } else if (suspendUser) {
       if (r.targetType !== 'user') throw E.invalid('تعلیق فقط برای گزارش کاربر ممکن است.');
       await tx.update(schema.users).set({ status: 'suspended' }).where(and(eq(schema.users.id, r.targetId), eq(schema.users.role, 'player')));
       await tx.update(schema.userSessions).set({ revokedAt: new Date() }).where(eq(schema.userSessions.userId, r.targetId));
     }
     await tx.update(schema.reports).set({ status: decision, resolution: note.slice(0, 500), resolvedBy: admin.id, resolvedAt: new Date() }).where(eq(schema.reports.id, reportId));
     await notify(tx, r.reporterId, 'report_update', 'گزارش شما بررسی شد', decision === 'resolved' ? 'اقدام لازم انجام شد. ممنون از اطلاع‌رسانی شما.' : 'پس از بررسی، تخلفی تأیید نشد.', '/notifications');
-    await audit(admin.id, `report.${decision}`, 'report', reportId, { suspendUser, note });
+    await audit(admin.id, `report.${decision}`, 'report', reportId, { suspendUser, hideMsg, note });
   });
 }

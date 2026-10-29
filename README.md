@@ -222,14 +222,14 @@ docs/             Design, architecture, deployment, phase handoffs
 | 3 | Attendance, reliability score, ratings, reports | ✅ |
 | 4 | Owner dashboard, user settings, admin panel | ✅ |
 | 5 | Automatic split payment UX, teams & matching, English README | ✅ |
-| 6 | Text chat rooms (sessions & teams) | ⏳ |
+| 6 | Text chat rooms (sessions & teams) | ✅ |
 | 7 | Real payment gateway (sandbox → live) | ⏳ |
 | 8 | PWA, performance, accessibility pass | ⏳ |
 | 9 | Release hardening | ⏳ |
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/12-phase5-handoff.md`](docs/12-phase5-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/13-phase6-handoff.md`](docs/13-phase6-handoff.md).
 
 ## License
 

@@ -5,6 +5,7 @@ import { DomainError } from '@/server/booking/errors';
 import { normalizeDigits } from '@/lib/i18n/digits';
 import { markAttendance } from './attendance';
 import { submitPeerReviews, submitVenueReview, getRateContext } from './ratings';
+import { reportMessage } from '@/server/messaging';
 import { createReport, resolveReport, REPORT_TYPES, type ReportType } from './reports';
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -41,11 +42,14 @@ export async function submitVenueReviewAction(reservationId: string, fd: FormDat
 export async function createReportAction(type: string, targetId: string, fd: FormData) {
   const u = await requireUser(`/report?type=${type}&id=${targetId}`);
   if (!REPORT_TYPES.includes(type as ReportType) || !UUID.test(targetId)) redirect('/');
-  await run(`/report?type=${type}&id=${targetId}`, () => createReport(u.id, type as ReportType, targetId, String(fd.get('reason') ?? ''), String(fd.get('details') ?? '')));
+  await run(`/report?type=${type}&id=${targetId}`, () => {
+    const reason = String(fd.get('reason') ?? ''), details = String(fd.get('details') ?? '');
+    return type === 'message' ? reportMessage(u.id, targetId, reason, details) : createReport(u.id, type as ReportType, targetId, reason, details);
+  });
   redirect('/report?done=1');
 }
 export async function resolveReportAction(reportId: string, decision: 'resolved' | 'dismissed', fd: FormData) {
   const u = await requireRole(['admin']);
-  await run('/admin/reports', () => resolveReport(u, reportId, decision, String(fd.get('note') ?? ''), fd.get('suspend') === 'on'));
+  await run('/admin/reports', () => resolveReport(u, reportId, decision, String(fd.get('note') ?? ''), fd.get('suspend') === 'on', fd.get('hide') === 'on'));
   redirect('/admin/reports?ok=1');
 }

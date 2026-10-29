@@ -62,6 +62,7 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
       <div className="mt-5 space-y-3">
         {canJoin && (user ? <form action={joinSessionAction.bind(null, s.id, q.t)}><button className="btn btn-primary w-full">پیوستن و پرداخت سهم ({formatToman(s.pricePerParticipant)})</button></form>
           : <Link className="btn btn-primary w-full" href={`/login?next=${encodeURIComponent(`/sessions/${s.id}${q.t ? `?t=${q.t}` : ''}`)}`}>ورود برای پیوستن</Link>)}
+        {d.myStatus === 'confirmed' && <Link className="btn btn-outline w-full" href={`/chat/session/${s.id}`}>گفت‌وگوی بازیکنان این سانس</Link>}
         {d.myStatus === 'pending_payment' && !d.isHost && <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-fg">پرداخت شما هنوز تکمیل نشده است. دوباره «پیوستن» را بزنید.</p>}
         {d.myStatus === 'confirmed' && !d.isHost && active && <form action={leaveSessionAction.bind(null, s.id)}><button className="btn btn-ghost w-full">خروج از سانس (طبق سیاست لغو)</button></form>}
         {full && !d.isMember && active && <p className="rounded-xl bg-page p-3 text-center text-ink-700">ظرفیت این سانس تکمیل است.</p>}

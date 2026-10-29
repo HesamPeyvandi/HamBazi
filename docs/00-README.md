@@ -18,6 +18,7 @@ Status: **Phase 5 complete** (automatic split payment, teams & matching, English
 | [10-phase3-handoff](10-phase3-handoff.md) | Phase 3 handoff |
 | [11-phase4-handoff](11-phase4-handoff.md) | Phase 4 handoff |
 | [12-phase5-handoff](12-phase5-handoff.md) | Phase 5 handoff |
+| [13-phase6-handoff](13-phase6-handoff.md) | تحویل فاز ۶: چت متنی، لوگو و تصاویر واقعی |
 | [FONT](FONT.md) | How to replace the brand font |
 | [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 

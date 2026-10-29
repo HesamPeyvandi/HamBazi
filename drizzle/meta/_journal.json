@@ -50,6 +50,13 @@
       "when": 1793155620501,
       "tag": "0006_teams_phase5",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793222673432,
+      "tag": "0007_chat_phase6",
+      "breakpoints": true
     }
   ]
 }

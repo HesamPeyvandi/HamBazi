@@ -55,6 +55,7 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
             {d.isCaptain && m.role !== 'captain' && (
               <span className="flex gap-2"><form action={transferCaptainAction.bind(null, t.id, m.userId)}><button className="btn btn-outline btn-sm">کاپیتان شود</button></form><form action={removeMemberAction.bind(null, t.id, m.userId)}><button className="btn btn-ghost btn-sm text-danger-fg">حذف</button></form></span>)}
           </li>))}</ul>
+        {d.isMember && <Link className="btn btn-outline mt-4 w-full" href={`/chat/team/${t.id}`}>گفت‌وگوی تیم</Link>}
         {d.isMember && !d.isCaptain && <form action={leaveTeamAction.bind(null, t.id)} className="mt-4"><button className="btn btn-ghost w-full">خروج از تیم</button></form>}
       </section>
 

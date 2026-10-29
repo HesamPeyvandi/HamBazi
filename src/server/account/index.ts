@@ -11,6 +11,7 @@ export const NOTIF_GROUPS = {
   sessions: { label: 'سانس‌های باز من', hint: 'پیوستن و خروج بازیکنان، تأیید قطعی سانس', types: ['participant_joined', 'participant_left', 'session_confirmed', 'session_published'] },
   rating: { label: 'امتیاز و نظر', hint: 'یادآوری امتیازدهی بعد از بازی و امتیازهایی که دریافت می‌کنید', types: ['rate_game', 'peer_rated'] },
   teams: { label: 'تیم‌ها', hint: 'درخواست عضویت، دعوت‌ها و اعلان‌های تیم', types: ['team_member', 'team_request', 'team_request_result', 'team_invite', 'team_session'] },
+  chat: { label: 'پیام‌های گفت‌وگو', hint: 'اعلان پیام جدید در گفت‌وگوی سانس‌ها و تیم‌ها (حداکثر یک اعلان خوانده‌نشده برای هر گفت‌وگو)', types: ['chat_message'] },
   owner: { label: 'پنل مالک', hint: 'رزروهای جدید سالن و نتیجهٔ بررسی سالن', types: ['reservation_new', 'venue_review'] },
 } as const;
 export type NotifGroup = keyof typeof NOTIF_GROUPS;

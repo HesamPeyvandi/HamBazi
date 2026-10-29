@@ -65,3 +65,11 @@
 - `team_requests(id, team_id, user_id, message, status pending|approved|rejected|cancelled)` — یک درخواست در انتظار برای هر (تیم، کاربر).
 - `team_session_invites(team_id, session_id)` یکتا.
 - قاعدهٔ سهم: `open_sessions.price_per_participant = ceil(slot.price / target_count / 1000) * 1000` (سرور)؛ `min_to_confirm = target_count`.
+
+
+## افزوده‌های فاز ۶ (چت، ایزوله)
+- `chat_rooms(id, kind session|team, session_id?, team_id?, last_message_at)` — CHECK «دقیقاً یکی از دو مرجع»؛ ایندکس یکتای جزئی برای هر سانس/تیم.
+- `chat_messages(seq bigint identity PK, id uuid UNIQUE, room_id, sender_id, body 1..1000, created_at, hidden_at?, hidden_by?)` — ایندکس `(room_id, seq)` و `(created_at)` برای نگهداری.
+- `chat_members(room_id, user_id, last_read_seq, muted)` — فقط وضعیت خواندن/بی‌صدا، **نه** عضویت.
+- `chat_blocks(room_id, blocker_id, blocked_id)` — CHECK غیر خود.
+- `reports.target_type` اکنون شامل `message`.

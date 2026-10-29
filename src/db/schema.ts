@@ -1,5 +1,5 @@
 import {
-  pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric,
+  pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric, bigint,
   uniqueIndex, index, primaryKey, check,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -437,7 +437,7 @@ export const reports = pgTable('reports', {
   resolvedAt: timestamp('resolved_at', { withTimezone: true }),
 }, (t) => [
   index('reports_status_idx').on(t.status, t.createdAt),
-  check('reports_target_type', sql`${t.targetType} IN ('user','venue','session')`),
+  check('reports_target_type', sql`${t.targetType} IN ('user','venue','session','message')`),
   check('reports_status', sql`${t.status} IN ('open','resolved','dismissed')`),
 ]);
 
@@ -497,3 +497,54 @@ export const teamSessionInvites = pgTable('team_session_invites', {
   invitedBy: uuid('invited_by').notNull().references(() => users.id, { onDelete: 'restrict' }),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex('team_session_invite_once').on(t.teamId, t.sessionId)]);
+
+/* =====================  PHASE 6: text chat (isolated module: src/server/messaging)  =====================
+ * Membership is NOT copied here: it is derived from session_participants / team_members at read time,
+ * so leaving a session or a team revokes chat access immediately. */
+export const chatRooms = pgTable('chat_rooms', {
+  id: id(),
+  kind: text('kind').notNull(), // session | team
+  sessionId: uuid('session_id').references(() => openSessions.id, { onDelete: 'cascade' }),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+  lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('chat_room_one_per_session').on(t.sessionId).where(sql`${t.sessionId} IS NOT NULL`),
+  uniqueIndex('chat_room_one_per_team').on(t.teamId).where(sql`${t.teamId} IS NOT NULL`),
+  check('chat_room_target', sql`(${t.kind} = 'session' AND ${t.sessionId} IS NOT NULL AND ${t.teamId} IS NULL) OR (${t.kind} = 'team' AND ${t.teamId} IS NOT NULL AND ${t.sessionId} IS NULL)`),
+]);
+
+/** `seq` is the polling cursor. Inserts into one room are serialised by a row lock on the room,
+ * so within a room seq order == commit order and a cursor can never skip a message. */
+export const chatMessages = pgTable('chat_messages', {
+  seq: bigint('seq', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+  id: uuid('id').notNull().unique().defaultRandom(),
+  roomId: uuid('room_id').notNull().references(() => chatRooms.id, { onDelete: 'cascade' }),
+  senderId: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  body: text('body').notNull(),
+  createdAt: createdAt(),
+  hiddenAt: timestamp('hidden_at', { withTimezone: true }), // moderation: body is no longer shown
+  hiddenBy: uuid('hidden_by').references(() => users.id, { onDelete: 'set null' }),
+}, (t) => [
+  index('chat_messages_room_seq_idx').on(t.roomId, t.seq),
+  index('chat_messages_created_idx').on(t.createdAt), // retention sweep
+  check('chat_message_body_len', sql`char_length(${t.body}) BETWEEN 1 AND 1000`),
+]);
+
+export const chatMembers = pgTable('chat_members', {
+  roomId: uuid('room_id').notNull().references(() => chatRooms.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastReadSeq: bigint('last_read_seq', { mode: 'number' }).notNull().default(0),
+  muted: boolean('muted').notNull().default(false),
+}, (t) => [primaryKey({ columns: [t.roomId, t.userId] })]);
+
+/** A user hides another user's messages inside one room (the blocked user is not told). */
+export const chatBlocks = pgTable('chat_blocks', {
+  roomId: uuid('room_id').notNull().references(() => chatRooms.id, { onDelete: 'cascade' }),
+  blockerId: uuid('blocker_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  blockedId: uuid('blocked_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: createdAt(),
+}, (t) => [
+  primaryKey({ columns: [t.roomId, t.blockerId, t.blockedId] }),
+  check('chat_block_not_self', sql`${t.blockerId} <> ${t.blockedId}`),
+]);
