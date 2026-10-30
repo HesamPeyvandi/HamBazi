@@ -87,11 +87,11 @@ check('reply can be cancelled', (await bp.locator('button[aria-label="لغو پ�
   const ph = await bp.locator('#chat-text').evaluate((el) => getComputedStyle(el).textAlign + '|' + el.dir);
   check('input is right-aligned (rtl)', ph.endsWith('rtl') && ['start', 'right'].includes(ph.split('|')[0]), ph);
   await bp.locator('[role=log] [id^="m-"]:has-text("پیام اول از علی") .rounded-2xl').first().click({ button: 'right' });
-  check('desktop right-click on the other person\'s message: reply/report/block', (await bp.locator('[role=menuitem]').count()) === 3);
+  check('desktop right-click on the other person\'s message: reply/copy/report/block', (await bp.locator('[role=menuitem]').count()) === 4);
   await bp.keyboard.press('Escape');
   check('Escape closes the menu', (await bp.locator('[role=menu]').count()) === 0);
   await bp.locator('[role=log] [id^="m-"]:has-text("این جواب شماست") .rounded-2xl').first().click({ button: 'right' });
-  check('own message menu has only reply', (await bp.locator('[role=menuitem]').count()) === 1);
+  check('own message menu: reply, copy, edit, delete', (await bp.locator('[role=menuitem]').count()) === 4);
   await bp.keyboard.press('Escape');
   check('desktop plain click does not open the menu', (await (async () => { await bp.locator('[role=log] [id^="m-"]:has-text("پیام اول از علی") .rounded-2xl').first().click(); return bp.locator('[role=menu]').count(); })()) === 0);
   const st = await b.ctx.storageState();

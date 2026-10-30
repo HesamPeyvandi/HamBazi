@@ -46,7 +46,7 @@ export default async function EditVenue({ params, searchParams }: { params: Prom
           <button className="btn btn-outline">آپلود</button></form></section>
       <section className="card mt-5 p-6" aria-labelledby="info-t"><h2 id="info-t" className="section-title mb-4">اطلاعات سالن</h2>
         <VenueForm action={updateVenueAction.bind(null, v.id, sports.map((s) => s.id))} cities={cities} sports={sports} submitLabel="ذخیرهٔ تغییرات"
-          defaults={{ name: v.name, cityId: v.cityId, address: v.address, neighborhood: v.neighborhood, description: v.description, surface: v.surface ?? '', openHours: v.openHours ?? '', rules: v.rules, facilities: d.facilities, sports: d.sports }} /></section>
+          defaults={{ name: v.name, cityId: v.cityId, address: v.address, neighborhood: v.neighborhood, description: v.description, surface: v.surface ?? '', openHours: v.openHours ?? '', rules: v.rules, lat: v.lat, lng: v.lng, facilities: d.facilities, sports: d.sports }} /></section>
       <section className="card mt-5 p-6" aria-labelledby="staff-t"><h2 id="staff-t" className="section-title mb-3">کارمندان سالن</h2>
         <ul className="divide-y divide-line">{staff.map((m) => (
           <li key={m.userId} className="flex items-center justify-between gap-3 py-2 text-sm"><span>{m.name || 'کاربر'} <span className="text-ink-500" dir="ltr">{formatPhoneDisplay(m.phone)}</span> · {m.role === 'owner' ? 'مالک' : 'کارمند'}</span>

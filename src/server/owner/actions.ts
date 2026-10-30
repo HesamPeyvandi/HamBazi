@@ -8,6 +8,7 @@ import { addStaff, removeStaff, addVenueImage, becomeVenueManager, createSlots, 
 
 const num = (v: FormDataEntryValue | null) => { const n = parseInt(normalizeDigits(String(v ?? '')).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : 0; };
 const UUID = /^[0-9a-f-]{36}$/i;
+const coord = (v: FormDataEntryValue | null) => { const t = normalizeDigits(String(v ?? '')).trim(); if (!t) return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };
 async function run<T>(path: string, fn: () => Promise<T>): Promise<T> {
   try { return await fn(); } catch (e) { if (e instanceof DomainError) redirect(`${path}${path.includes('?') ? '&' : '?'}err=${encodeURIComponent(e.message)}`); throw e; }
 }
@@ -18,6 +19,7 @@ function venueFromForm(fd: FormData, sportIds: string[]) {
     name: String(fd.get('name') ?? ''), cityId: String(fd.get('cityId') ?? ''), address: String(fd.get('address') ?? ''), neighborhood: String(fd.get('neighborhood') ?? ''),
     description: String(fd.get('description') ?? ''), surface: String(fd.get('surface') ?? '') || undefined, openHours: String(fd.get('openHours') ?? '') || undefined,
     rules: String(fd.get('rules') ?? '').split('\n').map((x) => x.trim()).filter(Boolean),
+    lat: coord(fd.get('lat')), lng: coord(fd.get('lng')),
     facilities: fd.getAll('facility').map(String),
     sports: sportIds.filter((id) => fd.get(`sport_${id}`) === 'on').map((id) => ({ sportId: id, price: num(fd.get(`price_${id}`)), minutes: num(fd.get(`minutes_${id}`)) || 90, maxCapacity: num(fd.get(`cap_${id}`)) || 10 })),
   };

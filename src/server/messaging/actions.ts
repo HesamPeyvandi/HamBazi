@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/server/auth/rbac';
 import { DomainError } from '@/server/booking/errors';
-import { sendMessage, setBlocked, setMuted, type MessageDTO } from './index';
+import { deleteMessage, editMessage, sendMessage, setBlocked, setMuted, type MessageDTO } from './index';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 export type SendResult = { ok: true; message: MessageDTO } | { ok: false; error: string; code: string };
@@ -12,6 +12,18 @@ export async function sendMessageAction(roomId: string, body: string, replyToId?
   const u = await requireUser(`/chat/${roomId}`);
   if (!UUID.test(roomId)) return { ok: false, code: 'not_found', error: 'گفت‌وگو پیدا نشد.' };
   try { return { ok: true, message: await sendMessage(u.id, roomId, body, replyToId && UUID.test(replyToId) ? replyToId : null) }; }
+  catch (e) { if (e instanceof DomainError) return { ok: false, error: e.message, code: e.code }; throw e; }
+}
+export async function editMessageAction(messageId: string, body: string): Promise<SendResult> {
+  const u = await requireUser('/chat');
+  if (!UUID.test(messageId)) return { ok: false, code: 'not_found', error: 'پیام پیدا نشد.' };
+  try { return { ok: true, message: await editMessage(u.id, messageId, body) }; }
+  catch (e) { if (e instanceof DomainError) return { ok: false, error: e.message, code: e.code }; throw e; }
+}
+export async function deleteMessageAction(messageId: string): Promise<SendResult> {
+  const u = await requireUser('/chat');
+  if (!UUID.test(messageId)) return { ok: false, code: 'not_found', error: 'پیام پیدا نشد.' };
+  try { return { ok: true, message: await deleteMessage(u.id, messageId) }; }
   catch (e) { if (e instanceof DomainError) return { ok: false, error: e.message, code: e.code }; throw e; }
 }
 export async function muteAction(roomId: string, muted: boolean) {

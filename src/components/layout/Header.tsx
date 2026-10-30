@@ -3,6 +3,7 @@ import { Bell, MessageCircle, Search } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { Avatar } from '@/components/ui/misc';
 import { DesktopNav } from './NavLinks';
+import { HeaderShell } from './HeaderShell';
 import { currentUser } from '@/server/auth/session';
 import { unreadCount, unreadChatCount } from '@/server/booking/notifications';
 import { toFa } from '@/lib/i18n/digits';
@@ -11,7 +12,7 @@ export async function Header() {
   const user = await currentUser();
   const [unread, unreadChat] = user ? await Promise.all([unreadCount(user.id), unreadChatCount(user.id)]) : [0, 0];
   return (
-    <header className="sticky top-0 z-50 bg-brand-900 text-white shadow-[0_1px_0_rgb(255_255_255/0.06)]">
+    <HeaderShell>
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-10">
           <Link href="/" aria-label="هم‌بازی — صفحهٔ اصلی"><Logo dark /></Link>
@@ -34,6 +35,6 @@ export async function Header() {
           )}
         </div>
       </div>
-    </header>
+    </HeaderShell>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@/server/auth/session';
 import { DomainError } from '@/server/booking/errors';
-import { checkPollLimit, getMessages } from '@/server/messaging';
+import { checkPollLimit, getMessages, getUpdates } from '@/server/messaging';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -19,7 +19,10 @@ export async function GET(req: Request, ctx: { params: Promise<{ roomId: string 
     await checkPollLimit(user.id);
     const after = num(q.get('after')), before = num(q.get('before'));
     const r = await getMessages(user.id, roomId, { after, before, limit: num(q.get('limit')), markRead: q.get('mark') === '1' });
-    return NextResponse.json({ messages: r.messages, hasMore: r.hasMore, lastSeq: r.lastSeq, canWrite: r.access.canWrite }, { headers: H });
+    // edits/deletions of OLD messages: only on forward polls that carry the `upd` cursor (epoch ms)
+    const upd = num(q.get('upd'));
+    const u = after !== undefined && upd !== undefined ? await getUpdates(user.id, roomId, upd) : null;
+    return NextResponse.json({ messages: r.messages, hasMore: r.hasMore, lastSeq: r.lastSeq, canWrite: r.access.canWrite, peerRead: r.peerRead, updates: u?.updates ?? [], updCursor: u?.cursor ?? upd ?? 0 }, { headers: H });
   } catch (e) {
     if (e instanceof DomainError) return NextResponse.json({ error: e.code }, { status: e.code === 'rate_limited' ? 429 : 404, headers: H });
     throw e;

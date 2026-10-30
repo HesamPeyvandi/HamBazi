@@ -1,10 +1,11 @@
 import { FACILITIES } from '@/lib/facilities';
+import { LocationPicker } from '@/components/owner/LocationPicker';
 
 interface Props {
   action: (fd: FormData) => void | Promise<void>;
   cities: { id: string; nameFa: string }[];
   sports: { id: string; nameFa: string; defaultCapacity: number }[];
-  defaults?: { name: string; cityId: string; address: string; neighborhood: string; description: string; surface: string; openHours: string; rules: string[]; facilities: string[];
+  defaults?: { name: string; cityId: string; address: string; neighborhood: string; description: string; surface: string; openHours: string; rules: string[]; facilities: string[]; lat?: number | null; lng?: number | null;
     sports: { sportId: string; pricePerSlot: number; slotMinutes: number; maxCapacity: number }[] };
   submitLabel: string;
 }
@@ -16,6 +17,7 @@ export function VenueForm({ action, cities, sports, defaults: d, submitLabel }: 
         <div><label className="label" htmlFor="cityId">شهر</label><select id="cityId" name="cityId" defaultValue={d?.cityId} className="field">{cities.map((c) => <option key={c.id} value={c.id}>{c.nameFa}</option>)}</select></div>
         <div><label className="label" htmlFor="neighborhood">محله</label><input id="neighborhood" name="neighborhood" defaultValue={d?.neighborhood} className="field" /></div>
         <div className="sm:col-span-2"><label className="label" htmlFor="address">آدرس</label><input id="address" name="address" required defaultValue={d?.address} className="field" /></div>
+        <div className="sm:col-span-2"><LocationPicker lat={d?.lat} lng={d?.lng} /></div>
         <div><label className="label" htmlFor="surface">نوع کفپوش</label><input id="surface" name="surface" defaultValue={d?.surface} className="field" placeholder="مثلاً پارکت" /></div>
         <div><label className="label" htmlFor="openHours">ساعت فعالیت</label><input id="openHours" name="openHours" defaultValue={d?.openHours} className="field" placeholder="۱۰ صبح تا ۱۲ شب" /></div>
         <div className="sm:col-span-2"><label className="label" htmlFor="description">توضیحات</label><textarea id="description" name="description" rows={4} maxLength={1500} defaultValue={d?.description} className="field" /></div>

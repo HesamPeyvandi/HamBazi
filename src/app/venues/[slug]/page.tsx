@@ -11,6 +11,8 @@ import { formatDecimal, formatNumber, formatToman, toFa } from '@/lib/i18n/digit
 import { JALALI_MONTHS, JALALI_WEEKDAYS, formatJalaliLong, formatJalaliWithWeekday, formatTime, jalaliToUtc, toJalali } from '@/lib/i18n/jalali';
 import { isValidJalaaliDate } from 'jalaali-js';
 import type { Metadata } from 'next';
+import { NavChooser, VenueMap } from '@/components/venues/VenueMap';
+import { validCoord } from '@/lib/geo';
 
 type P = { params: Promise<{ slug: string }>; searchParams: Promise<{ day?: string }> };
 
@@ -24,6 +26,7 @@ export default async function VenuePage({ params, searchParams }: P) {
   const data = await getVenueBySlug(slug);
   if (!data) notFound();
   const { venue: v, card, sports, reviews, ratingDistribution, cityName } = data;
+  const hasPos = validCoord(v.lat, v.lng);
 
   const now = new Date();
   const today = toJalali(now);
@@ -108,7 +111,7 @@ export default async function VenuePage({ params, searchParams }: P) {
         <p className="help mt-4">با انتخاب سانس می‌توانید کل سالن را رزرو کنید یا یک سانس باز بسازید. پرداخت در این نسخه شبیه‌سازی‌شده است.</p>
       </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="card p-6" aria-labelledby="fac-title">
           <h2 id="fac-title" className="section-title mb-4">امکانات سالن</h2>
           <ul className="grid grid-cols-2 gap-3">
@@ -120,12 +123,18 @@ export default async function VenuePage({ params, searchParams }: P) {
           <h2 id="rules-title" className="section-title mb-4">قوانین و نکات</h2>
           <ul className="list-disc space-y-2 ps-5 text-sm leading-7 text-ink-700">{v.rules.map((r) => <li key={r}>{r}</li>)}</ul>
         </section>
-        <section className="card p-6" aria-labelledby="loc-title">
-          <h2 id="loc-title" className="section-title mb-4">موقعیت مکانی</h2>
-          <p className="flex items-start gap-2 text-sm"><MapPin className="mt-1 h-4 w-4 shrink-0 text-brand-600" aria-hidden />{cityName}، {v.neighborhood}<br />{v.address}</p>
-          <p className="mt-3 text-sm text-ink-500">ساعت فعالیت: {v.openHours}</p>
-        </section>
       </div>
+
+
+      <section className="card mt-8 p-6" aria-labelledby="loc-title">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="loc-title" className="section-title">موقعیت مکانی</h2>
+          {hasPos && <NavChooser lat={v.lat as number} lng={v.lng as number} />}
+        </div>
+        <p className="flex items-start gap-2 text-sm"><MapPin className="mt-1 h-4 w-4 shrink-0 text-brand-600" aria-hidden />{cityName}، {v.neighborhood}<br />{v.address}</p>
+        {v.openHours && <p className="mt-2 text-sm text-ink-500">ساعت فعالیت: {v.openHours}</p>}
+        {hasPos && <div className="mt-4"><VenueMap lat={v.lat as number} lng={v.lng as number} name={v.name} /></div>}
+      </section>
 
       <section className="card mt-8 p-6" aria-labelledby="rev-title">
         <h2 id="rev-title" className="section-title mb-5">نظرات کاربران</h2>

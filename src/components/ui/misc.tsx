@@ -59,3 +59,15 @@ export function EmptyState({ title, text, action }: { title: string; text?: stri
     </div>
   );
 }
+
+/** Player rating badge: Latin digits only (like a game card), soft diagonal stripes on the green disc, number and label tucked together at the centre. */
+export function OvrBadge({ value, className = '' }: { value: number; className?: string }) {
+  return (
+    <span role="img" aria-label={`OVR ${value}`} dir="ltr"
+      className={`grid h-14 w-14 shrink-0 place-content-center rounded-full bg-brand-600 text-center text-white shadow-inner ring-2 ring-brand-100 ${className}`}
+      style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgb(255 255 255 / 0.13) 0 3px, transparent 3px 7px)', fontFamily: 'ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif' }}>
+      <span aria-hidden className="block text-[1.2rem] font-extrabold leading-none tabular-nums">{value}</span>
+      <span aria-hidden className="mt-0.5 block text-[0.58rem] font-bold leading-none tracking-wider opacity-90">OVR</span>
+    </span>
+  );
+}

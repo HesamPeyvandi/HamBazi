@@ -528,9 +528,13 @@ export const chatMessages = pgTable('chat_messages', {
   hiddenAt: timestamp('hidden_at', { withTimezone: true }), // moderation: body is no longer shown
   hiddenBy: uuid('hidden_by').references(() => users.id, { onDelete: 'set null' }),
   replyToId: uuid('reply_to_id').references((): AnyPgColumn => chatMessages.id, { onDelete: 'set null' }), // quoted message (same room, checked in code)
+  editedAt: timestamp('edited_at', { withTimezone: true }),   // author edited the text (shown as «ویرایش شده»)
+  deletedAt: timestamp('deleted_at', { withTimezone: true }), // author deleted it for everyone (body is wiped)
+  updatedAt: timestamp('updated_at', { withTimezone: true }), // last edit/delete/hide: lets pollers pick up changes to old messages
 }, (t) => [
   index('chat_messages_room_seq_idx').on(t.roomId, t.seq),
   index('chat_messages_created_idx').on(t.createdAt), // retention sweep
+  index('chat_messages_updated_idx').on(t.roomId, t.updatedAt).where(sql`${t.updatedAt} IS NOT NULL`),
   check('chat_message_body_len', sql`char_length(${t.body}) BETWEEN 1 AND 1000`),
 ]);
 

@@ -29,7 +29,7 @@ async function pageChecks(page, label) {
   const overflow = await page.evaluate((w) => document.documentElement.scrollWidth - w, page.viewportSize().width);
   check(`${label}: no horizontal scroll`, overflow <= 1, `overflow=${overflow}`);
   const bad = await page.evaluate(() => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const b = [];
-    while (w.nextNode()) { const n = w.currentNode, p = n.parentElement; if (!p || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(p.tagName)) continue; if (/[0-9]/.test(n.textContent)) b.push(n.textContent.trim().slice(0, 40)); } return b.slice(0, 4); });
+    while (w.nextNode()) { const n = w.currentNode, p = n.parentElement; if (!p || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(p.tagName) || p.closest('[role=img][aria-label^="OVR"]')) continue; if (/[0-9]/.test(n.textContent)) b.push(n.textContent.trim().slice(0, 40)); } return b.slice(0, 4); });
   check(`${label}: digits are Persian`, bad.length === 0, bad.join(' | '));
 }
 const uid = (phone) => psql(`select id from users where phone_e164='+98${phone.slice(1)}'`);

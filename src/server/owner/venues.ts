@@ -73,12 +73,14 @@ export const venueInput = z.object({
   neighborhood: z.string().trim().max(60).default(''), description: z.string().trim().max(1500).default(''),
   surface: z.string().trim().max(60).optional(), openHours: z.string().trim().max(80).optional(),
   rules: z.array(z.string().trim().min(1).max(160)).max(10).default([]),
+  lat: z.number().min(24).max(40.5).nullable().default(null), lng: z.number().min(43.5).max(64).nullable().default(null),
   facilities: z.array(z.string()).default([]), sports: z.array(sportLine).min(1, 'حداقل یک ورزش با قیمت لازم است.'),
 });
 export type VenueInput = z.infer<typeof venueInput>;
 
 function parse(input: unknown): VenueInput {
   const r = venueInput.safeParse(input);
+  if (r.success && (r.data.lat === null) !== (r.data.lng === null)) throw new DomainError('invalid', 'موقعیت نقشه کامل نیست؛ دوباره روی نقشه کلیک کنید.');
   if (!r.success) throw new DomainError('invalid', r.error.issues[0]?.message ?? 'اطلاعات معتبر نیست.');
   const dup = new Set(r.data.sports.map((s) => s.sportId));
   if (dup.size !== r.data.sports.length) throw E.invalid('یک ورزش فقط یک‌بار قابل ثبت است.');
@@ -100,7 +102,7 @@ export async function createVenue(actor: Actor, raw: unknown) {
   return db().transaction(async (tx) => {
     const [v] = await tx.insert(schema.venues).values({
       ownerUserId: actor.id, cityId: i.cityId, slug: `v-${randomBytes(5).toString('hex')}`, name: i.name, description: i.description, address: i.address,
-      neighborhood: i.neighborhood, surface: i.surface, openHours: i.openHours, rules: i.rules, capacity: cap(i), status: 'draft',
+      neighborhood: i.neighborhood, surface: i.surface, openHours: i.openHours, rules: i.rules, capacity: cap(i), status: 'draft', lat: i.lat, lng: i.lng,
     }).returning();
     await tx.insert(schema.venueManagers).values({ venueId: v.id, userId: actor.id, role: 'owner' });
     await writeChildren(tx, v.id, i);
@@ -118,7 +120,7 @@ export async function updateVenue(actor: Actor, venueId: string, raw: unknown) {
     const keep = new Set(i.sports.map((s) => s.sportId));
     const used = await tx.selectDistinct({ id: schema.timeSlots.sportId }).from(schema.timeSlots).where(eq(schema.timeSlots.venueId, venueId));
     if (used.some((u) => !keep.has(u.id))) throw E.invalid('ورزشی که برایش سانس ثبت شده را نمی‌توان حذف کرد.');
-    await tx.update(schema.venues).set({ name: i.name, cityId: i.cityId, address: i.address, neighborhood: i.neighborhood, description: i.description, surface: i.surface, openHours: i.openHours, rules: i.rules, capacity: cap(i) }).where(eq(schema.venues.id, venueId));
+    await tx.update(schema.venues).set({ name: i.name, cityId: i.cityId, address: i.address, neighborhood: i.neighborhood, description: i.description, surface: i.surface, openHours: i.openHours, rules: i.rules, capacity: cap(i), lat: i.lat, lng: i.lng }).where(eq(schema.venues.id, venueId));
     await writeChildren(tx, venueId, i);
   });
   await audit(actor.id, 'venue.update', 'venue', venueId, {});

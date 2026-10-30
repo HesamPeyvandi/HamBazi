@@ -4,7 +4,7 @@ import { requireUser } from '@/server/auth/rbac';
 import { getProfileData } from '@/server/profile';
 import { getPublicProfile } from '@/server/trust/profile';
 import { logoutAction } from '@/server/auth/actions';
-import { Avatar } from '@/components/ui/misc';
+import { Avatar, OvrBadge } from '@/components/ui/misc';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
 import { toFa } from '@/lib/i18n/digits';
 
@@ -51,7 +51,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <h2 id={`sk-${s.sportKey}`} className="section-title">مهارت‌های {s.nameFa}</h2>
             <span className="pill pill-green">سطح {LEVEL[s.level]}</span>
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-600 text-center text-[0.65rem] font-bold leading-tight text-white ms-auto" aria-label={`OVR ${toFa(s.ovr)}`}>OVR<br /><span className="text-base">{toFa(s.ovr)}</span></span>
+            <OvrBadge value={s.ovr} className="ms-auto" />
           </div>
           <ul className="space-y-3">
             {s.categories.filter((c) => s.selfScores[c.key] != null).map((c) => (

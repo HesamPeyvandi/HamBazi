@@ -36,6 +36,9 @@ describe('owner journey', () => {
   it('creates a draft venue, unknown facilities are dropped, validation errors are Persian', async () => {
     expect(await code(createVenue(A, { ...input(), name: 'ab' }))).toBe('invalid');
     expect(await code(createVenue(A, { ...input(), sports: [] }))).toBe('invalid');
+    expect(await code(createVenue(A, { ...input(), lat: 35.57 }))).toBe('invalid');                       // half a position
+    expect(await code(createVenue(A, { ...input(), lat: 53.39, lng: 35.57 }))).toBe('invalid');           // swapped lat/lng
+    expect(await code(createVenue(A, { ...input(), lat: 51.5, lng: -0.12 }))).toBe('invalid');            // outside Iran
     const v = await createVenue(A, input()); venueId = v.id;
     expect(v.status).toBe('draft');
     const d = await getOwnerVenue(A, venueId);

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
+import { FooterGate } from '@/components/layout/FooterGate';
 import { Footer } from '@/components/layout/Footer';
 import { DemoBanner } from '@/components/layout/DemoBanner';
 import { BottomNav } from '@/components/layout/NavLinks';
@@ -24,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <DemoBanner />
         <Header />
         <main id="main">{children}</main>
-        <Footer />
+        <FooterGate><Footer /></FooterGate>
         <BottomNav loggedIn={!!user} />
       </body>
     </html>

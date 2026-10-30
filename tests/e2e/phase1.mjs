@@ -22,7 +22,7 @@ async function pageChecks(page, label) {
   check(`${label}: no horizontal scroll`, overflow <= 1, `overflow=${overflow}`);
   const ascii = await page.evaluate(() => {
     const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const bad = [];
-    while (w.nextNode()) { const n = w.currentNode; const p = n.parentElement; if (!p || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(p.tagName)) continue;
+    while (w.nextNode()) { const n = w.currentNode; const p = n.parentElement; if (!p || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(p.tagName) || p.closest('[role=img][aria-label^="OVR"]')) continue; // the OVR badge is Latin by design
       const m = n.textContent.match(/[0-9]+/g); if (m) bad.push(n.textContent.trim().slice(0, 40)); }
     return bad.slice(0, 5);
   });

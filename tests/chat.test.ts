@@ -9,7 +9,7 @@ import { saveNotifPrefs } from '@/server/account';
 import { createTeam, joinTeam, leaveTeam, disbandTeam } from '@/server/teams';
 import { resolveReport } from '@/server/trust/reports';
 import {
-  ensureRoom, getMessages, listRooms, markRead, normalizeBody, purgeOldMessages, reportMessage, sendMessage, setBlocked, setMuted,
+  ensureRoom, getMessages, editMessage, deleteMessage, getUpdates, getPeerRead, EDIT_WINDOW_HOURS, listRooms, markRead, normalizeBody, purgeOldMessages, reportMessage, sendMessage, setBlocked, setMuted,
   MAX_MESSAGE_LENGTH, SEND_LIMITS, checkPollLimit, POLL_LIMIT,
 } from '@/server/messaging';
 
@@ -271,5 +271,61 @@ describe('retention', () => {
     await sqlClient()`INSERT INTO chat_messages (room_id, sender_id, body, created_at) VALUES (${room}, ${h}, 'old', now() - interval '91 days')`;
     expect(await purgeOldMessages()).toBe(1); expect(await purgeOldMessages()).toBe(0);
     expect((await getMessages(h, room)).messages.map((m) => m.body)).toEqual(['new']);
+  });
+});
+
+describe('edit, delete, updates, read ticks', () => {
+  async function setup() { const h = await mkUser(); const a = await mkUser(); const sid = await session(h, [a]); const room = await ensureRoom(h, 'session', sid); return { h, a, room, sid }; }
+  it('only the author edits; text is normalised; unchanged text is not marked edited; window and states enforced', async () => {
+    const { h, a, room } = await setup();
+    const m = await sendMessage(h, room, 'اول');
+    expect(await code(editMessage(a, m.id, 'هک'))).toBe('not_found');             // someone else's message looks missing
+    expect(await code(editMessage(h, m.id, '   '))).toBe('invalid');
+    const same = await editMessage(h, m.id, 'اول'); expect(same.editedAt).toBeNull();
+    const e = await editMessage(h, m.id, '  دوم\r\n'); expect(e).toMatchObject({ body: 'دوم', editedAt: expect.any(String) });
+    expect(await code(editMessage(h, m.id, 'دیر', new Date(Date.now() + (EDIT_WINDOW_HOURS + 1) * H)))).toBe('edit_expired');
+    await sqlClient()`UPDATE chat_messages SET hidden_at = now() WHERE id = ${m.id}`;
+    expect(await code(editMessage(h, m.id, 'x'))).toBe('bad_state');
+  });
+  it('delete wipes the text for everyone, is idempotent, author-only, and blocks later edits', async () => {
+    const { h, a, room } = await setup();
+    const m = await sendMessage(h, room, 'راز');
+    expect(await code(deleteMessage(a, m.id))).toBe('not_found');
+    const d = await deleteMessage(h, m.id); expect(d).toMatchObject({ deleted: true, body: '' });
+    await deleteMessage(h, m.id);
+    const [row] = await sqlClient()`SELECT body FROM chat_messages WHERE id = ${m.id}`; expect(row.body).not.toContain('راز');
+    expect((await getMessages(a, room)).messages.find((x) => x.id === m.id)).toMatchObject({ deleted: true, body: '' });
+    expect(await code(editMessage(h, m.id, 'x'))).toBe('bad_state');
+  });
+  it('quotes of an edited/deleted message follow it', async () => {
+    const { h, a, room } = await setup();
+    const o = await sendMessage(h, room, 'اصلی'); const r = await sendMessage(a, room, 'پاسخ', o.id);
+    await editMessage(h, o.id, 'اصلاح‌شده');
+    expect((await getMessages(a, room)).messages.find((x) => x.id === r.id)!.replyTo?.snippet).toBe('اصلاح‌شده');
+    await deleteMessage(h, o.id);
+    expect((await getMessages(a, room)).messages.find((x) => x.id === r.id)!.replyTo).toMatchObject({ hidden: true, snippet: '' });
+  });
+  it('getUpdates returns changed old messages after the cursor (with a small overlap), respects blocks, and needs access', async () => {
+    const { h, a, room } = await setup(); const out = await mkUser();
+    const m = await sendMessage(h, room, 'قدیمی');
+    const t0 = Date.now() + 10_000;                 // a cursor in the future: nothing changed yet
+    expect((await getUpdates(a, room, t0)).updates).toHaveLength(0);
+    const since = Date.now() - 1000;
+    await editMessage(h, m.id, 'جدید');
+    const u = await getUpdates(a, room, since);
+    expect(u.updates.map((x) => x.id)).toEqual([m.id]); expect(u.updates[0].body).toBe('جدید'); expect(u.cursor).toBeGreaterThanOrEqual(since);
+    await setBlocked(a, room, h, true);
+    expect((await getUpdates(a, room, since)).updates).toHaveLength(0);
+    expect(await code(getUpdates(out, room, since))).toBe('not_found');
+  });
+  it('peerRead is the highest read position of the OTHER members', async () => {
+    const { h, a, room } = await setup();
+    const m1 = await sendMessage(h, room, 'یک'); const m2 = await sendMessage(h, room, 'دو');
+    expect(await getPeerRead(h, room)).toBe(0);
+    await markRead(a, room, m1.seq);
+    expect(await getPeerRead(h, room)).toBe(m1.seq);
+    await markRead(a, room, m2.seq);
+    expect(await getPeerRead(h, room)).toBe(m2.seq);
+    expect(await getPeerRead(a, room)).toBe(m2.seq); // h's own send marked h as read up to m2
   });
 });

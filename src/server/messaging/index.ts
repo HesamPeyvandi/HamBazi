@@ -24,6 +24,9 @@ import { rateLimit } from '@/server/ratelimit';
 export const MAX_MESSAGE_LENGTH = 1000;
 export const PAGE_SIZE = 50;
 export const RETENTION_DAYS = 90;
+export const EDIT_WINDOW_HOURS = 48;
+export const EDIT_LIMIT = { n: 20, seconds: 60 } as const;
+export const UPDATE_OVERLAP_MS = 5000;
 export const SEND_LIMITS = { burst: { n: 6, seconds: 10 }, sustained: { n: 60, seconds: 600 } } as const;
 export const POLL_LIMIT = { n: 120, seconds: 60 } as const;
 const LIVE_SESSION = ['collecting', 'confirmed'] as const;
@@ -38,7 +41,7 @@ export interface Access {
 }
 export interface MessageDTO {
   seq: number; id: string; senderId: string; senderName: string; senderAvatar: string | null;
-  body: string; hidden: boolean; createdAt: string; mine: boolean; replyTo: ReplyDTO | null;
+  body: string; hidden: boolean; deleted: boolean; editedAt: string | null; createdAt: string; mine: boolean; replyTo: ReplyDTO | null;
 }
 export interface ReplyDTO { id: string; senderId: string; senderName: string; snippet: string; hidden: boolean }
 
@@ -122,14 +125,14 @@ export async function ensureRoom(userId: string, kind: RoomKind, refId: string):
 // NB: drizzle's postgres.js client returns timestamps as strings even for raw queries, hence the `Ts` unions + iso().
 type Ts = Date | string;
 const iso = (t: Ts) => new Date(t).toISOString();
-interface Row { seq: number; id: string; sender_id: string; name: string | null; avatar: string | null; body: string; created_at: Ts; hidden_at: Ts | null;
+interface Row { seq: number; id: string; sender_id: string; name: string | null; avatar: string | null; body: string; created_at: Ts; hidden_at: Ts | null; edited_at: Ts | null; deleted_at: Ts | null;
   r_id: string | null; r_sender: string | null; r_name: string | null; r_body: string | null; r_hidden: Ts | null; r_blocked: boolean | null }
 const REPLY_JOIN = () => sqlClient()`LEFT JOIN chat_messages rm ON rm.id = m.reply_to_id AND rm.room_id = m.room_id LEFT JOIN users ru ON ru.id = rm.sender_id`;
-const REPLY_COLS = (me: string) => sqlClient()`rm.id AS r_id, rm.sender_id AS r_sender, ru.display_name AS r_name, rm.body AS r_body, rm.hidden_at AS r_hidden,
+const REPLY_COLS = (me: string) => sqlClient()`rm.id AS r_id, rm.sender_id AS r_sender, ru.display_name AS r_name, rm.body AS r_body, COALESCE(rm.hidden_at, rm.deleted_at) AS r_hidden,
   EXISTS (SELECT 1 FROM chat_blocks rb WHERE rb.room_id = m.room_id AND rb.blocker_id = ${me} AND rb.blocked_id = rm.sender_id) AS r_blocked`;
 const toDTO = (r: Row, me: string): MessageDTO => ({
   seq: Number(r.seq), id: r.id, senderId: r.sender_id, senderName: r.name || 'کاربر', senderAvatar: r.avatar,
-  body: r.hidden_at ? '' : r.body, hidden: !!r.hidden_at, createdAt: iso(r.created_at), mine: r.sender_id === me,
+  body: r.hidden_at || r.deleted_at ? '' : r.body, hidden: !!r.hidden_at, deleted: !!r.deleted_at, editedAt: r.edited_at ? iso(r.edited_at) : null, createdAt: iso(r.created_at), mine: r.sender_id === me,
   replyTo: r.r_id ? { id: r.r_id, senderId: r.r_sender ?? '', senderName: r.r_blocked ? 'کاربر مسدودشده' : r.r_name || 'کاربر', snippet: r.r_hidden || r.r_blocked ? '' : [...(r.r_body ?? '').replace(/\s+/g, ' ')].slice(0, 100).join(''), hidden: !!r.r_hidden || !!r.r_blocked } : null,
 });
 
@@ -146,12 +149,12 @@ export async function getMessages(userId: string, roomId: string, opts: { after?
   let hasMore = false;
   if (opts.after !== undefined) {
     rows = await sql_<Row[]>`
-      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, ${REPLY_COLS(userId)}
+      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, m.edited_at, m.deleted_at, ${REPLY_COLS(userId)}
       FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()}
       WHERE m.room_id = ${roomId} AND m.seq > ${opts.after} AND ${blocked} ORDER BY m.seq ASC LIMIT ${limit}`;
   } else {
     const got = await sql_<Row[]>`
-      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, ${REPLY_COLS(userId)}
+      SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, m.edited_at, m.deleted_at, ${REPLY_COLS(userId)}
       FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()}
       WHERE m.room_id = ${roomId} ${opts.before !== undefined ? sql_`AND m.seq < ${opts.before}` : sql_``} AND ${blocked}
       ORDER BY m.seq DESC LIMIT ${limit + 1}`;
@@ -161,7 +164,7 @@ export async function getMessages(userId: string, roomId: string, opts: { after?
   const messages = rows.map((r) => toDTO(r, userId));
   const last = rows.length ? Number(rows[rows.length - 1].seq) : 0;
   if (opts.markRead && last && opts.before === undefined) await markRead(userId, roomId, last);
-  return { access, messages, hasMore, lastSeq: last };
+  return { access, messages, hasMore, lastSeq: last, peerRead: await getPeerRead(userId, roomId) };
 }
 
 export async function markRead(userId: string, roomId: string, seq: number) {
@@ -196,11 +199,11 @@ export async function sendMessage(userId: string, roomId: string, rawBody: unkno
     if (!access.canWrite) throw new DomainError('read_only', 'این گفت‌وگو فقط‌خواندنی است.');
     let replyTo: ReplyDTO | null = null;
     if (replyToId) {
-      const [t] = await tx.select({ id: schema.chatMessages.id, senderId: schema.chatMessages.senderId, body: schema.chatMessages.body, hiddenAt: schema.chatMessages.hiddenAt, name: schema.users.displayName })
+      const [t] = await tx.select({ id: schema.chatMessages.id, senderId: schema.chatMessages.senderId, body: schema.chatMessages.body, hiddenAt: schema.chatMessages.hiddenAt, deletedAt: schema.chatMessages.deletedAt, name: schema.users.displayName })
         .from(schema.chatMessages).innerJoin(schema.users, eq(schema.users.id, schema.chatMessages.senderId))
         .where(and(eq(schema.chatMessages.id, replyToId), eq(schema.chatMessages.roomId, roomId)));
       if (!t) throw E.invalid('پیامی که می‌خواهید به آن پاسخ دهید پیدا نشد.'); // also refuses ids from other rooms
-      replyTo = { id: t.id, senderId: t.senderId, senderName: t.name || 'کاربر', snippet: t.hiddenAt ? '' : [...t.body.replace(/\s+/g, ' ')].slice(0, 100).join(''), hidden: !!t.hiddenAt };
+      replyTo = { id: t.id, senderId: t.senderId, senderName: t.name || 'کاربر', snippet: t.hiddenAt || t.deletedAt ? '' : [...t.body.replace(/\s+/g, ' ')].slice(0, 100).join(''), hidden: !!(t.hiddenAt || t.deletedAt) };
     }
     const [m] = await tx.insert(schema.chatMessages).values({ roomId, senderId: userId, body, replyToId: replyTo?.id ?? null }).returning();
     await tx.update(schema.chatRooms).set({ lastMessageAt: m.createdAt }).where(eq(schema.chatRooms.id, roomId));
@@ -209,7 +212,7 @@ export async function sendMessage(userId: string, roomId: string, rawBody: unkno
       ON CONFLICT (room_id, user_id) DO UPDATE SET last_read_seq = GREATEST(chat_members.last_read_seq, EXCLUDED.last_read_seq)`);
     const [u] = await tx.select({ name: schema.users.displayName, avatar: schema.users.avatarUrl }).from(schema.users).where(eq(schema.users.id, userId));
     await fanOut(tx, access, userId, u?.name || 'کاربر', body);
-    return { seq: m.seq, id: m.id, senderId: userId, senderName: u?.name || 'کاربر', senderAvatar: u?.avatar ?? null, body, hidden: false, createdAt: m.createdAt.toISOString(), mine: true, replyTo };
+    return { seq: m.seq, id: m.id, senderId: userId, senderName: u?.name || 'کاربر', senderAvatar: u?.avatar ?? null, body, hidden: false, deleted: false, editedAt: null, createdAt: m.createdAt.toISOString(), mine: true, replyTo };
   });
 }
 
@@ -262,13 +265,13 @@ export async function listRooms(userId: string): Promise<RoomListItem[]> {
       FROM team_members tm JOIN teams t ON t.id = tm.team_id AND t.status = 'active' WHERE tm.user_id = ${userId}
     )
     SELECT r.id AS room_id, mine.kind, mine.ref_id, mine.title, mine.starts_at, r.last_message_at AS last_at, mine.can_write, cm.muted,
-      lm.body AS last_body, lm.hidden_at IS NOT NULL AS last_hidden, lu.display_name AS last_sender,
-      COALESCE((SELECT count(*) FROM chat_messages m WHERE m.room_id = r.id AND m.seq > COALESCE(cm.last_read_seq, 0) AND m.sender_id <> ${userId} AND m.hidden_at IS NULL
+      lm.body AS last_body, (lm.hidden_at IS NOT NULL OR lm.deleted_at IS NOT NULL) AS last_hidden, lu.display_name AS last_sender,
+      COALESCE((SELECT count(*) FROM chat_messages m WHERE m.room_id = r.id AND m.seq > COALESCE(cm.last_read_seq, 0) AND m.sender_id <> ${userId} AND m.hidden_at IS NULL AND m.deleted_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM chat_blocks b WHERE b.room_id = m.room_id AND b.blocker_id = ${userId} AND b.blocked_id = m.sender_id)), 0)::int AS unread
     FROM mine
     LEFT JOIN chat_rooms r ON (mine.kind = 'session' AND r.session_id = mine.ref_id) OR (mine.kind = 'team' AND r.team_id = mine.ref_id)
     LEFT JOIN chat_members cm ON cm.room_id = r.id AND cm.user_id = ${userId}
-    LEFT JOIN LATERAL (SELECT m.body, m.sender_id, m.hidden_at FROM chat_messages m WHERE m.room_id = r.id
+    LEFT JOIN LATERAL (SELECT m.body, m.sender_id, m.hidden_at, m.deleted_at FROM chat_messages m WHERE m.room_id = r.id
       AND NOT EXISTS (SELECT 1 FROM chat_blocks b WHERE b.room_id = m.room_id AND b.blocker_id = ${userId} AND b.blocked_id = m.sender_id)
       ORDER BY m.seq DESC LIMIT 1) lm ON true
     LEFT JOIN users lu ON lu.id = lm.sender_id
@@ -326,9 +329,73 @@ export async function reportMessage(reporterId: string, messageId: string, reaso
   return createReport(reporterId, 'message', messageId, reason, `${snapshot}\n${details.trim()}`.slice(0, 1000));
 }
 
+/* ---------------------------------------------------------------- edit / delete / updates */
+
+/** Highest `last_read_seq` among the OTHER members: own messages with seq <= this show the double tick. */
+export async function getPeerRead(userId: string, roomId: string): Promise<number> {
+  const [r] = await sqlClient()<{ m: string | null }[]>`SELECT max(last_read_seq) AS m FROM chat_members WHERE room_id = ${roomId} AND user_id <> ${userId}`;
+  return Number(r?.m ?? 0);
+}
+
+async function loadOwn(tx: Q, userId: string, messageId: string) {
+  const [m] = await tx.select().from(schema.chatMessages).where(eq(schema.chatMessages.id, messageId));
+  if (!m || m.senderId !== userId) throw E.notFound(); // someone else's message looks the same as a missing one
+  return m;
+}
+
+/** Author only, text only, not hidden/deleted, within EDIT_WINDOW_HOURS, room still writable. Unchanged text is a no-op. */
+export async function editMessage(userId: string, messageId: string, rawBody: unknown, now = new Date()): Promise<MessageDTO> {
+  const body = normalizeBody(rawBody);
+  const m = await loadOwn(db(), userId, messageId);
+  const access = await requireAccess(userId, m.roomId);
+  if (!access.canWrite) throw new DomainError('read_only', 'این گفت‌وگو فقط‌خواندنی است.');
+  if (m.hiddenAt || m.deletedAt) throw E.badState();
+  if (now.getTime() - m.createdAt.getTime() > EDIT_WINDOW_HOURS * 3_600_000) throw new DomainError('edit_expired', `ویرایش فقط تا ${EDIT_WINDOW_HOURS} ساعت پس از ارسال ممکن است.`);
+  const rl = await rateLimit(`chat:edit:${userId}`, EDIT_LIMIT.n, EDIT_LIMIT.seconds);
+  if (!rl.allowed) throw new DomainError('rate_limited', 'ویرایش‌ها خیلی سریع انجام می‌شوند. چند لحظه صبر کنید.');
+  if (body !== m.body) {
+    await db().update(schema.chatMessages).set({ body, editedAt: now, updatedAt: now }).where(and(eq(schema.chatMessages.id, m.id), sql`${schema.chatMessages.deletedAt} IS NULL`, sql`${schema.chatMessages.hiddenAt} IS NULL`));
+  }
+  return (await oneDTO(userId, m.id))!;
+}
+
+/** "Delete for everyone": the text is wiped (not just hidden); the row stays so replies and seq order keep working. */
+export async function deleteMessage(userId: string, messageId: string, now = new Date()): Promise<MessageDTO> {
+  const m = await loadOwn(db(), userId, messageId);
+  await requireAccess(userId, m.roomId);
+  if (!m.deletedAt) await db().update(schema.chatMessages).set({ body: '·', deletedAt: now, updatedAt: now, editedAt: null }).where(eq(schema.chatMessages.id, m.id));
+  return (await oneDTO(userId, m.id))!;
+}
+
+async function oneDTO(userId: string, messageId: string): Promise<MessageDTO | null> {
+  const s = sqlClient();
+  const rows = await s<Row[]>`
+    SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, m.edited_at, m.deleted_at, ${REPLY_COLS(userId)}
+    FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()} WHERE m.id = ${messageId}`;
+  return rows[0] ? toDTO(rows[0], userId) : null;
+}
+
+/**
+ * Messages that were edited / deleted / hidden after `since` (epoch ms). The window overlaps the previous poll by a few
+ * seconds so a slow transaction can never be skipped; clients merge by id, so repeats are harmless.
+ */
+export async function getUpdates(userId: string, roomId: string, since: number) {
+  await requireAccess(userId, roomId);
+  const s = sqlClient();
+  const from = new Date(Math.max(0, since - UPDATE_OVERLAP_MS));
+  const rows = await s<(Row & { upd: Ts })[]>`
+    SELECT m.seq, m.id, m.sender_id, u.display_name AS name, u.avatar_url AS avatar, m.body, m.created_at, m.hidden_at, m.edited_at, m.deleted_at, m.updated_at AS upd, ${REPLY_COLS(userId)}
+    FROM chat_messages m JOIN users u ON u.id = m.sender_id ${REPLY_JOIN()}
+    WHERE m.room_id = ${roomId} AND m.updated_at IS NOT NULL AND m.updated_at > ${from.toISOString()}::timestamptz
+      AND NOT EXISTS (SELECT 1 FROM chat_blocks b WHERE b.room_id = m.room_id AND b.blocker_id = ${userId} AND b.blocked_id = m.sender_id)
+    ORDER BY m.updated_at ASC LIMIT 100`;
+  const cursor = rows.reduce((mx, r) => Math.max(mx, new Date(r.upd).getTime()), since);
+  return { updates: rows.map((r) => toDTO(r, userId)), cursor };
+}
+
 /** Admin only (called from resolveReport). Hides the message text; the row stays for the audit trail. */
 export async function hideMessage(tx: Tx, adminId: string, messageId: string) {
-  const r = await tx.update(schema.chatMessages).set({ hiddenAt: new Date(), hiddenBy: adminId }).where(eq(schema.chatMessages.id, messageId)).returning({ id: schema.chatMessages.id });
+  const r = await tx.update(schema.chatMessages).set({ hiddenAt: new Date(), hiddenBy: adminId, updatedAt: new Date() }).where(eq(schema.chatMessages.id, messageId)).returning({ id: schema.chatMessages.id });
   if (!r.length) throw E.notFound();
 }
 export async function messageSender(tx: Tx, messageId: string) {

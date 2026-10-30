@@ -21,6 +21,7 @@ Status: **Phase 5 complete** (automatic split payment, teams & matching, English
 | [13-phase6-handoff](13-phase6-handoff.md) | تحویل فاز ۶: چت متنی، لوگو و تصاویر واقعی |
 | [14-phase7-handoff](14-phase7-handoff.md) | تحویل فاز ۷: پاسخ در چت، علاقه‌مندی، لیست انتظار، پشتیبانی، کارمند سالن |
 | [15-phase8-handoff](15-phase8-handoff.md) | تحویل فاز ۸: PWA، صفحهٔ آفلاین، بررسی دسترس‌پذیری، اصلاحات چت |
+| [16-phase8b-handoff](16-phase8b-handoff.md) | اصلاحیهٔ فاز ۸: چت پیام‌رسان‌گونه، نقشه و مسیریابی، هدر شفاف، OVR |
 | [FONT](FONT.md) | How to replace the brand font |
 | [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 

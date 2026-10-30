@@ -111,7 +111,7 @@ await bp.locator('[role=log] [id^="m-"] >> text=سلام تیم ۱۲۳').first()
 check('B blocked A: A\'s messages are gone for B', (await bp.locator('[role=log] >> text=سلام تیم ۱۲۳').count()) === 0);
 await ap.reload({ waitUntil: 'networkidle' });
 check('A still sees everything (B not hidden from A)', (await ap.locator('[role=log] >> text=سلام کاپیتان').count()) === 1);
-await bp.locator('button:has-text("رفع مسدودی")').click(); await bp.waitForURL('**ok=unblocked**'); await bp.waitForSelector('[role=log] >> text=سلام تیم ۱۲۳', { timeout: 8000 }).catch(async () => { await bp.screenshot({ path: SHOTS + '/dbg.png' }); console.log(bp.url()); });
+await bp.locator('details summary').click(); await bp.locator('button:has-text("رفع مسدودی")').click(); await bp.waitForURL('**ok=unblocked**'); await bp.waitForSelector('[role=log] >> text=سلام تیم ۱۲۳', { timeout: 8000 }).catch(async () => { await bp.screenshot({ path: SHOTS + '/dbg.png' }); console.log(bp.url()); });
 check('unblock restores messages', (await bp.locator('[role=log] >> text=سلام تیم ۱۲۳').count()) === 1);
 
 // ---------- report a message

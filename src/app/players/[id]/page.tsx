@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Flag, MapPin, ShieldCheck, Trophy } from 'lucide-react';
 import { currentUser } from '@/server/auth/session';
 import { getPublicProfile } from '@/server/trust/profile';
-import { Avatar } from '@/components/ui/misc';
+import { Avatar, OvrBadge } from '@/components/ui/misc';
 import { toFa } from '@/lib/i18n/digits';
 import { formatJalaliShort } from '@/lib/i18n/jalali';
 
@@ -45,7 +45,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       {p.sports.map((s) => (
         <section key={s.key} className="card mt-5 p-6" aria-labelledby={`s-${s.key}`}>
           <div className="mb-4 flex flex-wrap items-center gap-3"><h2 id={`s-${s.key}`} className="section-title">مهارت‌های {s.nameFa}</h2><span className="pill pill-green">سطح {LEVEL[s.level]}</span>
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand-600 text-center text-[0.65rem] font-bold leading-tight text-white ms-auto" aria-label={`OVR ${toFa(s.ovr)}`}>OVR<br /><span className="text-base">{toFa(s.ovr)}</span></span></div>
+            <OvrBadge value={s.ovr} className="ms-auto" /></div>
           <ul className="space-y-3">{s.categories.map((c) => (
             <li key={c.key} className="grid grid-cols-[5.5rem_1fr_2rem] items-center gap-3 text-sm"><span>{c.nameFa}</span>
               <span className="h-2.5 overflow-hidden rounded-full bg-page"><span className="block h-full rounded-full bg-gradient-to-l from-brand-600 to-accent" style={{ width: `${c.value}%` }} /></span><span className="font-bold">{toFa(c.value)}</span></li>))}</ul>

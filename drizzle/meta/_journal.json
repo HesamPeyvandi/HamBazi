@@ -71,6 +71,13 @@
       "when": 1793271893557,
       "tag": "0009_chat_reply",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793353338889,
+      "tag": "0010_chat_edit_delete",
+      "breakpoints": true
     }
   ]
 }

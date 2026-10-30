@@ -83,3 +83,8 @@
 - `support_messages(id, user_id, topic, body, status open|closed, resolved_by?, resolved_at?)`.
 - `venue_reviews.hidden_at/hidden_by` — نظر پنهان‌شده در میانگین امتیاز و صفحه‌های عمومی حساب نمی‌شود.
 - `venue_managers.role` (owner|staff) از قبل وجود داشت؛ اکنون برای دسترسی کارمند استفاده می‌شود.
+
+
+## افزوده‌های اصلاحیهٔ فاز ۸ (مهاجرت 0010)
+- `chat_messages.edited_at` (ویرایش توسط نویسنده)، `deleted_at` (حذف برای همه؛ متن پاک و با `·` جایگزین می‌شود)، `updated_at` (آخرین ویرایش/حذف/پنهان‌سازی؛ برای پولینگ تغییرات پیام‌های قدیمی) + ایندکس جزئی `(room_id, updated_at)`.
+- `venues.lat/lng` از قبل بود؛ اکنون از فرم مالک پر می‌شود (محدودهٔ ایران، یا هر دو خالی).

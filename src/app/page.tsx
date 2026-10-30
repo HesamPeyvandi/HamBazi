@@ -22,11 +22,13 @@ export default async function HomePage() {
     <>
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hero.jpg" alt="" aria-hidden className="absolute inset-y-0 end-0 -z-10 hidden h-full w-[48%] object-cover lg:block [mask-image:linear-gradient(to_right,black_75%,transparent)]" />
+        <img src="/img/hero.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 hidden h-full w-full object-cover object-[30%_50%] lg:block" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hall-a.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover opacity-90 lg:hidden" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-brand-950/75 via-brand-950/5 to-brand-950/35 lg:bg-gradient-to-l lg:from-brand-950/55 lg:via-brand-950/10 lg:to-transparent" />
-        <div className="container-page pb-10 pt-12 lg:pb-20 lg:pt-20">
+        <img src="/img/hall-a.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover lg:hidden" />
+        {/* desktop: gradient only over the inline-start third (the text side); mobile: a light even tint so the text stays readable */}
+        <div aria-hidden className="absolute inset-0 -z-10 bg-brand-950/35 lg:hidden" />
+        <div aria-hidden className="absolute inset-y-0 start-0 -z-10 hidden w-1/3 bg-gradient-to-l from-brand-950/85 via-brand-950/40 to-transparent lg:block" />
+        <div className="container-page pb-10 pt-28 lg:pb-20 lg:pt-36">
           <div className="max-w-xl lg:ms-0">
             <h1 className="[text-shadow:0_2px_14px_rgb(0_0_0/0.55)] text-[2rem] font-extrabold leading-[1.35] sm:text-5xl lg:text-[3.4rem]">
               سالن رو پیدا کن،<br /><span className="text-accent">هم‌بازیت رو هم.</span>
