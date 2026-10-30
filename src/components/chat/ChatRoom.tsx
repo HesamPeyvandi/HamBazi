@@ -19,6 +19,18 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [replyTo, setReplyTo] = useState<MessageDTO | null>(null);
+  const [menu, setMenu] = useState<{ m: MessageDTO; x: number; y: number } | null>(null);
+  const openMenu = (m: MessageDTO, x: number, y: number) => {
+    if (m.hidden || !(canWrite || !m.mine)) return;
+    setMenu({ m, x: Math.max(8, Math.min(x, window.innerWidth - 200)), y: Math.max(8, Math.min(y, window.innerHeight - 170)) });
+  };
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(null); };
+    window.addEventListener('click', close); window.addEventListener('wheel', close, { passive: true }); window.addEventListener('touchmove', close, { passive: true }); window.addEventListener('resize', close); window.addEventListener('keydown', key);
+    return () => { window.removeEventListener('click', close); window.removeEventListener('wheel', close); window.removeEventListener('touchmove', close); window.removeEventListener('resize', close); window.removeEventListener('keydown', key); };
+  }, [menu]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [fatal, setFatal] = useState('');
   const [pending, start] = useTransition();
@@ -102,9 +114,11 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
           return (
             <div key={m.seq} id={`m-${m.id}`} className="rounded-xl transition-colors">
               {sep && <p className="my-2 text-center text-xs text-ink-500">{day}</p>}
-              <div className={`flex items-end gap-2 ${m.mine ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-end gap-2 ${m.mine ? '' : 'flex-row-reverse'}`}>
                 {!m.mine && <Avatar seed={m.senderId} src={m.senderAvatar} name={m.senderName} size={32} />}
-                <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${m.mine ? 'bg-brand-600 text-white' : 'bg-page text-ink-900'}`}>
+                <div className={`max-w-[80%] cursor-pointer rounded-2xl px-3 py-2 ${m.mine ? 'bg-brand-600 text-white' : 'bg-page text-ink-900'}`}
+                  onContextMenu={(e) => { e.preventDefault(); openMenu(m, e.clientX, e.clientY); }}
+                  onClick={(e) => { if ((e.target as HTMLElement).closest('button,a')) return; if (window.matchMedia('(pointer: coarse)').matches) { e.stopPropagation(); openMenu(m, e.clientX, e.clientY); } }}>
                   {!m.mine && <p className="mb-0.5 text-xs font-bold" style={{ color: identityColor(m.senderId).name }}>{m.senderName}</p>}
                   {m.replyTo && (
                     <button type="button" onClick={() => jump(m.replyTo!.id)} className={`mb-1 block w-full rounded-lg border-s-4 px-2 py-1 text-start text-xs ${m.mine ? 'bg-white/15' : 'bg-white'}`}
@@ -114,20 +128,24 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
                     </button>)}
                   {m.hidden ? <p className="text-sm italic opacity-70">این پیام توسط مدیریت حذف شد.</p>
                     : <p dir="auto" className="whitespace-pre-wrap break-words text-sm leading-7">{m.body}</p>}
-                  <p className={`mt-0.5 flex items-center gap-2 text-[0.68rem] ${m.mine ? 'text-white/75' : 'text-ink-500'}`}>
+                  <div className={`mt-0.5 flex items-center gap-2 text-[0.68rem] ${m.mine ? 'text-white/75' : 'text-ink-500'}`}>
                     <span>{formatTime(d)}</span>
                     {canWrite && !m.hidden && <button type="button" onClick={() => { setReplyTo(m); inputRef.current?.focus(); }} className="inline-flex items-center gap-0.5 hover:underline" aria-label="پاسخ به این پیام"><CornerUpLeft className="h-3 w-3" aria-hidden />پاسخ</button>}
-                    {!m.mine && !m.hidden && (<>
-                      <Link href={`/report?type=message&id=${m.id}`} className="inline-flex items-center gap-0.5 hover:underline" aria-label="گزارش این پیام"><Flag className="h-3 w-3" aria-hidden />گزارش</Link>
-                      <form action={blockAction.bind(null, roomId, m.senderId, true)} className="inline"><button className="inline-flex items-center gap-0.5 hover:underline" aria-label={`مسدود کردن ${m.senderName}`}><Ban className="h-3 w-3" aria-hidden />مسدود</button></form>
-                    </>)}
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+      {menu && (
+        <div role="menu" aria-label="گزینه‌های پیام" className="fixed z-50 w-48 overflow-hidden rounded-xl border border-line bg-surface py-1 text-sm shadow-lg" style={{ left: menu.x, top: menu.y }} onClick={(e) => e.stopPropagation()}>
+          {canWrite && <button role="menuitem" type="button" className="flex w-full items-center gap-2 px-3 py-2 text-start hover:bg-page" onClick={() => { setReplyTo(menu.m); setMenu(null); inputRef.current?.focus(); }}><CornerUpLeft className="h-4 w-4" aria-hidden />پاسخ</button>}
+          {!menu.m.mine && (<>
+            <Link role="menuitem" href={`/report?type=message&id=${menu.m.id}`} className="flex w-full items-center gap-2 px-3 py-2 hover:bg-page"><Flag className="h-4 w-4" aria-hidden />گزارش پیام</Link>
+            <form action={blockAction.bind(null, roomId, menu.m.senderId, true)}><button role="menuitem" className="flex w-full items-center gap-2 px-3 py-2 text-start text-danger-fg hover:bg-page"><Ban className="h-4 w-4" aria-hidden />مسدود کردن {menu.m.senderName}</button></form>
+          </>)}
+        </div>)}
       {canWrite ? (
         <form onSubmit={(e) => { e.preventDefault(); send(); }} className="border-t border-line p-3">
           {replyTo && (
@@ -139,7 +157,7 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
           {error && <p role="alert" className="mb-2 rounded-lg bg-danger-bg p-2 text-sm text-danger-fg">{error}</p>}
           <div className="flex items-end gap-2">
             <label htmlFor="chat-text" className="sr-only">متن پیام</label>
-            <textarea ref={inputRef} id="chat-text" dir="auto" rows={1} value={text} maxLength={MAX} placeholder="پیام خود را بنویسید…" className="field max-h-32 min-h-11 flex-1 resize-none"
+            <textarea ref={inputRef} id="chat-text" dir="rtl" rows={1} value={text} maxLength={MAX} placeholder="پیام خود را بنویسید…" className="field max-h-32 min-h-11 flex-1 resize-none"
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }} />
             <button className="btn btn-primary h-11" disabled={pending || !text.trim()} aria-label="ارسال پیام"><Send className="h-5 w-5 -scale-x-100" aria-hidden /></button>

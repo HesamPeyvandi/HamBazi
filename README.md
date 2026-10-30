@@ -225,12 +225,12 @@ docs/             Design, architecture, deployment, phase handoffs
 | 6 | Text chat rooms (sessions & teams) | ✅ |
 | 7 | Chat replies & identity colours, favourites, waiting list, support desk, admin oversight, venue staff | ✅ |
 | 7 | Real payment gateway (sandbox → live) | ⏳ |
-| 8 | PWA, performance, accessibility pass | ⏳ |
+| 8 | PWA (installable, offline fallback), accessibility pass | ✅ |
 | 9 | Release hardening | ⏳ |
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/14-phase7-handoff.md`](docs/14-phase7-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/15-phase8-handoff.md`](docs/15-phase8-handoff.md).
 
 ## License
 

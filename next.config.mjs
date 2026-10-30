@@ -17,6 +17,13 @@ const nextConfig = {
   experimental: { serverActions: { bodySizeLimit: '5mb' } },
   async headers() {
     return [{
+      source: '/sw.js',
+      headers: [
+        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        { key: 'Content-Type', value: 'text/javascript; charset=utf-8' },
+        { key: 'Service-Worker-Allowed', value: '/' },
+      ],
+    }, {
       source: '/(.*)',
       headers: [
         { key: 'Content-Security-Policy', value: csp },

@@ -50,6 +50,7 @@ psql(`delete from venue_managers where role='staff'`);
 // ---------- chat reply + identity colour
 const a = await login('09000000001'), b = await login('09000000011');
 const ap = a.page, bp = b.page;
+const errs = []; bp.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); }); bp.on('pageerror', (e) => errs.push(String(e)));
 await ap.goto(`${BASE}/teams/${teamId}`, { waitUntil: 'networkidle' });
 await ap.click('a:has-text("گفت‌وگوی تیم")'); await ap.waitForURL(/\/chat\/[0-9a-f-]{36}$/);
 const roomId = ap.url().split('/').pop();
@@ -76,6 +77,33 @@ check('identity colour is stable across reloads', !!c1 && c1 === c2, c1);
 await bp.click('button[aria-label="پاسخ به این پیام"]'); await bp.click('button[aria-label="لغو پاسخ"]');
 check('reply can be cancelled', (await bp.locator('button[aria-label="لغو پاسخ"]').count()) === 0);
 
+// ---------- chat layout, context menu, hydration
+{
+  await bp.reload({ waitUntil: 'networkidle' });
+  const box = async (txt) => bp.locator(`[role=log] [id^="m-"]:has-text("${txt}")`).first().locator('.rounded-2xl').first().boundingBox();
+  const mine = await box('این جواب شماست'), theirs = await box('پیام اول از علی');
+  check('own message is on the right, the other person\'s on the left', mine.x > theirs.x, `${Math.round(mine.x)} vs ${Math.round(theirs.x)}`);
+  check('no report/block links under messages (only reply)', (await bp.locator('[role=log] a:has-text("گزارش")').count()) === 0 && (await bp.locator('[role=log] button:has-text("مسدود")').count()) === 0);
+  const ph = await bp.locator('#chat-text').evaluate((el) => getComputedStyle(el).textAlign + '|' + el.dir);
+  check('input is right-aligned (rtl)', ph.endsWith('rtl') && ['start', 'right'].includes(ph.split('|')[0]), ph);
+  await bp.locator('[role=log] [id^="m-"]:has-text("پیام اول از علی") .rounded-2xl').first().click({ button: 'right' });
+  check('desktop right-click on the other person\'s message: reply/report/block', (await bp.locator('[role=menuitem]').count()) === 3);
+  await bp.keyboard.press('Escape');
+  check('Escape closes the menu', (await bp.locator('[role=menu]').count()) === 0);
+  await bp.locator('[role=log] [id^="m-"]:has-text("این جواب شماست") .rounded-2xl').first().click({ button: 'right' });
+  check('own message menu has only reply', (await bp.locator('[role=menuitem]').count()) === 1);
+  await bp.keyboard.press('Escape');
+  check('desktop plain click does not open the menu', (await (async () => { await bp.locator('[role=log] [id^="m-"]:has-text("پیام اول از علی") .rounded-2xl').first().click(); return bp.locator('[role=menu]').count(); })()) === 0);
+  const st = await b.ctx.storageState();
+  const mctx = await browser.newContext({ storageState: st, viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true, locale: 'fa-IR' });
+  const mob = { page: await mctx.newPage() };
+  await mob.page.goto(`${BASE}/chat/${roomId}`, { waitUntil: 'networkidle' });
+  await mob.page.locator('[role=log] [id^="m-"]:has-text("پیام اول از علی") .rounded-2xl').first().tap();
+  check('mobile tap on a message opens the menu', (await mob.page.locator('[role=menu]').count()) === 1);
+  await mob.page.screenshot({ path: `${SHOTS}/chat-menu-mobile.png` });
+  check('no hydration / console errors in the chat page', errs.length === 0, errs.join(' | ').slice(0, 200));
+}
+
 // ---------- favourites
 await bp.goto(BASE + '/venues', { waitUntil: 'networkidle' });
 await bp.locator('button[aria-label="افزودن به علاقه‌مندی‌ها"]').first().click();
@@ -89,7 +117,7 @@ await anp.goto(BASE + '/favorites', { waitUntil: 'networkidle' }); check('/favor
 // ---------- help desk
 await bp.goto(BASE + '/help', { waitUntil: 'networkidle' });
 await bp.fill('#body', 'سلام، این یک پیام آزمایشی برای پشتیبانی است');
-await bp.click('#contact button[type=submit], #contact button:has-text("ارسال")'); await bp.waitForLoadState('networkidle');
+await bp.click('#contact button:has-text("ارسال پیام")'); await bp.waitForURL('**ok=sent**');
 check('support message stored', psql(`select count(*) from support_messages where user_id='${B}'`) === '1');
 const adm = await login('09000000003'); await adm.page.goto(BASE + '/admin/support', { waitUntil: 'networkidle' });
 check('admin sees the support message', (await adm.page.locator('text=پیام آزمایشی برای پشتیبانی').count()) === 1);
@@ -98,6 +126,7 @@ const rb = await bp.goto(BASE + '/admin/support', { waitUntil: 'networkidle' });
 
 // ---------- owner: sessions overview + staff
 const o = await login('09000000002'); const op = o.page;
+check('venue manager login lands on /owner', new URL(op.url()).pathname === '/owner', op.url());
 const rs = await op.goto(BASE + '/owner/sessions', { waitUntil: 'networkidle' }); check('/owner/sessions opens for the owner', rs.status() === 200);
 await op.goto(BASE + '/owner', { waitUntil: 'networkidle' });
 await op.locator('a[href^="/owner/venues/"]:not([href$="/new"])').first().click(); await op.waitForURL(/\/owner\/venues\/[0-9a-f-]{36}$/); await op.waitForLoadState('networkidle');

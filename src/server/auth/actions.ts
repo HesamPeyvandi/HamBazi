@@ -83,7 +83,9 @@ export async function verifyAction(_: FormState, fd: FormData): Promise<FormStat
   await setSessionCookie(r.token, r.expiresAt);
   (await cookies()).delete({ name: OTP_PHONE_COOKIE, path: '/login' });
   const [u] = await db().select().from(schema.users).where(eq(schema.users.id, r.userId));
-  redirect(!u.onboardedAt ? `/onboarding?next=${encodeURIComponent(next)}` : next);
+  // Venue managers land in their own panel by default; an explicit deep link (e.g. /owner/reservations) is still honoured.
+  const dest = next === '/' && u.role === 'venue_manager' ? '/owner' : next;
+  redirect(!u.onboardedAt ? `/onboarding?next=${encodeURIComponent(dest)}` : dest);
 }
 
 export async function logoutAction() {

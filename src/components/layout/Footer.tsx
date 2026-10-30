@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
+import { InstallButton } from '@/components/layout/PwaClient';
 
 export function Footer() {
   return (
@@ -8,6 +9,7 @@ export function Footer() {
         <div>
           <Logo dark size="sm" />
           <p className="mt-3 max-w-xs text-sm leading-7">رزرو سالن‌های ورزشی، پیدا کردن هم‌بازی و پرداخت آسان؛ همه در یک پلتفرم.</p>
+          <InstallButton className="mt-4" />
         </div>
         <nav aria-label="پیوندهای مفید" className="text-sm">
           <p className="mb-3 font-bold text-white">دسترسی سریع</p>

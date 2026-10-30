@@ -107,7 +107,7 @@ check('rate limit: at most 6 stored per 10 s window (14 attempts => <=12 stored)
 
 // ---------- block / unblock (B blocks A)
 await bp.reload({ waitUntil: 'networkidle' });
-await bp.locator('[role=log] button:has-text("مسدود")').first().click(); await bp.waitForURL('**ok=blocked**');
+await bp.locator('[role=log] [id^="m-"] >> text=سلام تیم ۱۲۳').first().click({ button: 'right' }); await bp.locator('[role=menuitem]:has-text("مسدود")').click(); await bp.waitForURL('**ok=blocked**');
 check('B blocked A: A\'s messages are gone for B', (await bp.locator('[role=log] >> text=سلام تیم ۱۲۳').count()) === 0);
 await ap.reload({ waitUntil: 'networkidle' });
 check('A still sees everything (B not hidden from A)', (await ap.locator('[role=log] >> text=سلام کاپیتان').count()) === 1);
@@ -115,7 +115,7 @@ await bp.locator('button:has-text("رفع مسدودی")').click(); await bp.wai
 check('unblock restores messages', (await bp.locator('[role=log] >> text=سلام تیم ۱۲۳').count()) === 1);
 
 // ---------- report a message
-await bp.locator('[role=log] a:has-text("گزارش")').first().click(); await bp.waitForURL('**/report?type=message**');
+await bp.locator('[role=log] [id^="m-"] >> text=سلام تیم ۱۲۳').first().click({ button: 'right' }); await bp.locator('[role=menuitem]:has-text("گزارش")').click(); await bp.waitForURL('**/report?type=message**');
 await bp.selectOption('#reason', 'abuse'); await bp.fill('#details', 'آزمون گزارش پیام'); await bp.click('button:has-text("ثبت گزارش")'); await bp.waitForURL('**done=1');
 check('message report stored with snapshot', psql(`select count(*) from reports where target_type='message' and reporter_id='${B}' and details like '%آزمون گزارش پیام%'`) === '1');
 
