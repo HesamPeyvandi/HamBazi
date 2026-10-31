@@ -107,7 +107,7 @@ check('button scrolls to the bottom and hides', (await ap.locator('button[aria-l
   const g = await p.evaluate(() => { const el = document.querySelector('section.relative.isolate > div[aria-hidden].lg\\:block'); const r = el?.getBoundingClientRect(); const s = el?.parentElement.getBoundingClientRect(); return r && { w: r.width / s.width, right: Math.round(s.right - r.right) }; });
   check('hero gradient covers only the inline-start third', g && Math.abs(g.w - 1 / 3) < 0.02 && g.right <= 1, JSON.stringify(g));
   await p.screenshot({ path: `${SHOTS}/home.png` });
-  await p.goto(BASE + '/venues', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/sessions', { waitUntil: 'networkidle' });
   const h2 = await p.evaluate(() => { const cs = getComputedStyle(document.querySelector('header')); return cs.position + '|' + cs.backgroundColor; });
   check('other pages keep the solid sticky header', h2.startsWith('sticky|') && !h2.endsWith('rgba(0, 0, 0, 0)'), h2);
   const m = await browser.newContext({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true, locale: 'fa-IR' }); const mp2 = await m.newPage();

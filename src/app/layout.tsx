@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   description: 'رزرو آسان سالن‌های ورزشی، پیدا کردن هم‌بازی و پرداخت مطمئن؛ همه در یک پلتفرم.',
   appleWebApp: { capable: true, title: 'هم‌بازی', statusBarStyle: 'black-translucent' },
 };
-export const viewport: Viewport = { themeColor: '#03352f', width: 'device-width', initialScale: 1 };
+// No pinch-zoom (product decision for the web app). Form fields are >= 16px so iOS does not zoom on focus either.
+export const viewport: Viewport = { themeColor: '#03352f', width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();

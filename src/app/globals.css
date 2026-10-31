@@ -38,6 +38,11 @@ main { flex: 1; }
 bdi, .ltr { unicode-bidi: isolate; direction: ltr; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
+/* No zoom: disable double-tap zoom and keep form controls at 16px so iOS never zooms on focus. */
+html { touch-action: manipulation; }
+input, select, textarea { font-size: 16px; }
+@media (min-width: 768px) { input, select, textarea { font-size: inherit; } }
+
 @layer components {
   .container-page { width: 100%; max-width: 1360px; margin-inline: auto; padding-inline: 1rem; }
   @media (min-width: 1024px) { .container-page { padding-inline: 2rem; } }

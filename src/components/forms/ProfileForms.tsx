@@ -2,10 +2,18 @@
 import { useActionState, useState } from 'react';
 import { onboardingAction, editProfileAction, type FormState } from '@/server/auth/actions';
 import { toFa } from '@/lib/i18n/digits';
+import { PLAY_TIMES } from '@/lib/play-times';
+
+function TimesField({ defaults }: { defaults: string[] }) {
+  return (
+    <fieldset><legend className="label">زمان‌های ترجیحی بازی <span className="font-normal text-ink-500">(می‌توانید چند مورد را انتخاب کنید)</span></legend>
+      <div className="flex flex-wrap gap-3">{PLAY_TIMES.map(([v, t]) => (
+        <label key={v} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-line px-4 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"><input type="checkbox" name="time" value={v} defaultChecked={defaults.includes(v)} className="checkbox" />{t}</label>))}</div></fieldset>
+  );
+}
 
 interface SportInfo { key: string; nameFa: string; skills: { key: string; nameFa: string }[] }
 const init: FormState = {};
-const TIMES = [['morning', 'صبح'], ['afternoon', 'ظهر و عصر'], ['evening', 'عصر و شب'], ['night', 'آخر شب']] as const;
 
 function Err({ s, k }: { s: FormState; k: string }) { return s.fieldErrors?.[k] ? <p className="error-text" role="alert">{s.fieldErrors[k]}</p> : null; }
 
@@ -22,7 +30,7 @@ function Slider({ name, label, defaultValue }: { name: string; label: string; de
 
 export function OnboardingForm({ sports, cities, defaults, next }: {
   sports: SportInfo[]; cities: { slug: string; nameFa: string }[];
-  defaults: { name: string; city: string; sports: string[]; time?: string; scores: Record<string, Record<string, number>> }; next: string;
+  defaults: { name: string; city: string; sports: string[]; times: string[]; scores: Record<string, Record<string, number>> }; next: string;
 }) {
   const [s, action, pending] = useActionState(onboardingAction, init);
   const [chosen, setChosen] = useState<string[]>(defaults.sports);
@@ -40,9 +48,7 @@ export function OnboardingForm({ sports, cities, defaults, next }: {
           <label key={sp.key} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-4 ${chosen.includes(sp.key) ? 'border-brand-600 bg-brand-50' : 'border-line'}`}>
             <input type="checkbox" name="sport" value={sp.key} checked={chosen.includes(sp.key)} onChange={() => toggle(sp.key)} className="checkbox" />{sp.nameFa}</label>))}</div>
         <Err s={s} k="sport" /></fieldset>
-      <fieldset><legend className="label">زمان ترجیحی بازی</legend>
-        <div className="flex flex-wrap gap-3">{TIMES.map(([v, t]) => (
-          <label key={v} className="flex min-h-11 items-center gap-2 rounded-xl border border-line px-4"><input type="radio" name="time" value={v} defaultChecked={defaults.time === v} className="checkbox" />{t}</label>))}</div></fieldset>
+      <TimesField defaults={defaults.times} />
 
       {sports.filter((sp) => chosen.includes(sp.key)).map((sp) => (
         <fieldset key={sp.key} className="rounded-2xl border border-line p-4">
@@ -56,7 +62,7 @@ export function OnboardingForm({ sports, cities, defaults, next }: {
   );
 }
 
-export function EditProfileForm({ defaults, sports }: { defaults: { name: string; bio: string; sports: string[]; showProfile: boolean; showHistory: boolean }; sports: { key: string; nameFa: string }[] }) {
+export function EditProfileForm({ defaults, sports }: { defaults: { name: string; bio: string; sports: string[]; times: string[]; showProfile: boolean; showHistory: boolean }; sports: { key: string; nameFa: string }[] }) {
   const [s, action, pending] = useActionState(editProfileAction, init);
   const [bio, setBio] = useState(defaults.bio);
   return (
@@ -68,6 +74,7 @@ export function EditProfileForm({ defaults, sports }: { defaults: { name: string
       <fieldset><legend className="label">ورزش‌ها</legend>
         <div className="flex flex-wrap gap-3">{sports.map((sp) => (
           <label key={sp.key} className="flex min-h-11 items-center gap-2 rounded-xl border border-line px-4"><input type="checkbox" name="sport" value={sp.key} defaultChecked={defaults.sports.includes(sp.key)} className="checkbox" />{sp.nameFa}</label>))}</div></fieldset>
+      <TimesField defaults={defaults.times} />
       <fieldset><legend className="label">حریم خصوصی</legend>
         <label className="flex min-h-10 items-center gap-2"><input type="checkbox" name="showProfile" defaultChecked={defaults.showProfile} className="checkbox" />نمایش پروفایل من به سایر کاربران</label>
         <label className="flex min-h-10 items-center gap-2"><input type="checkbox" name="showHistory" defaultChecked={defaults.showHistory} className="checkbox" />نمایش سابقهٔ بازی‌ها</label>

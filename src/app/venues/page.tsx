@@ -30,7 +30,7 @@ export default async function VenuesPage({ searchParams }: { searchParams: Promi
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/img/hall-b.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover opacity-35" />
-        <div className="container-page py-10">
+        <div className="container-page pb-10 pt-24">
           <nav aria-label="مسیر" className="mb-4 text-xs text-white/70"><Link href="/">خانه</Link> <span aria-hidden>›</span> سالن‌ها</nav>
           <h1 className="text-3xl font-extrabold sm:text-4xl">سالن‌های ورزشی</h1>
           <p className="mt-2 text-white/80">جستجو، مقایسه و رزرو سالن‌های ورزشی در سمنان و سایر شهرها</p>
@@ -56,9 +56,9 @@ export default async function VenuesPage({ searchParams }: { searchParams: Promi
                   <option value="popular">محبوب‌ترین</option><option value="rating">بالاترین امتیاز</option>
                   <option value="price_asc">ارزان‌ترین</option><option value="price_desc">گران‌ترین</option>
                 </select>
-                <button className="btn btn-ghost btn-sm" type="submit">اعمال</button>
+                <button className="btn btn-ghost btn-sm !min-h-10" type="submit">اعمال</button>
               </form>
-              <div className="flex rounded-xl border border-line bg-white p-0.5" role="group" aria-label="نوع نمایش">
+              <div className="flex h-10 items-center rounded-xl border border-line bg-white px-0.5" role="group" aria-label="نوع نمایش">
                 <Link href={qs({ view: 'list', page: 1 })} aria-label="نمایش لیستی" aria-current={view === 'list'} className={`grid h-9 w-9 place-items-center rounded-lg ${view === 'list' ? 'bg-brand-600 text-white' : ''}`}><List className="h-4 w-4" /></Link>
                 <Link href={qs({ view: 'grid', page: 1 })} aria-label="نمایش کارتی" aria-current={view === 'grid'} className={`grid h-9 w-9 place-items-center rounded-lg ${view === 'grid' ? 'bg-brand-600 text-white' : ''}`}><LayoutGrid className="h-4 w-4" /></Link>
               </div>

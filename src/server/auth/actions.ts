@@ -1,4 +1,5 @@
 'use server';
+import { serializeTimes } from '@/lib/play-times';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -103,13 +104,12 @@ const SKILL_KEYS: Record<string, string[]> = {
 const onboardingSchema = z.object({
   name: z.string().trim().min(2, 'نام را وارد کنید').max(60),
   city: z.string().regex(/^[a-z0-9-]{1,40}$/),
-  time: z.enum(['morning', 'afternoon', 'evening', 'night']).optional(),
 });
 
 export async function onboardingAction(_: FormState, fd: FormData): Promise<FormState> {
   const user = await currentUser();
   if (!user) redirect('/login');
-  const parsed = onboardingSchema.safeParse({ name: fd.get('name'), city: fd.get('city'), time: fd.get('time') || undefined });
+  const parsed = onboardingSchema.safeParse({ name: fd.get('name'), city: fd.get('city') });
   if (!parsed.success) return { fieldErrors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])) };
   const sportKeys = fd.getAll('sport').map(String).filter((s) => s in SKILL_KEYS);
   if (!sportKeys.length) return { fieldErrors: { sport: 'حداقل یک ورزش را انتخاب کنید' } };
@@ -118,7 +118,7 @@ export async function onboardingAction(_: FormState, fd: FormData): Promise<Form
   const sportRows = await db().select().from(schema.sports);
   await db().transaction(async (tx) => {
     await tx.update(schema.users).set({ displayName: parsed.data.name, onboardedAt: user.onboardedAt ?? new Date() }).where(eq(schema.users.id, user.id));
-    await tx.update(schema.userProfiles).set({ cityId: city?.id, preferredSports: sportKeys, preferredTime: parsed.data.time ?? null, updatedAt: new Date() })
+    await tx.update(schema.userProfiles).set({ cityId: city?.id, preferredSports: sportKeys, preferredTime: serializeTimes(fd.getAll('time').map(String)), updatedAt: new Date() })
       .where(eq(schema.userProfiles.userId, user.id));
     for (const key of sportKeys) {
       const sport = sportRows.find((s) => s.key === key);
@@ -149,7 +149,7 @@ export async function editProfileAction(_: FormState, fd: FormData): Promise<For
   const showProfile = fd.get('showProfile') === 'on', showHistory = fd.get('showHistory') === 'on';
   await db().transaction(async (tx) => {
     await tx.update(schema.users).set({ displayName: p.data.name }).where(eq(schema.users.id, user.id));
-    await tx.update(schema.userProfiles).set({ bio: p.data.bio, preferredSports: sportKeys, privacy: { showProfile, showHistory }, updatedAt: new Date() })
+    await tx.update(schema.userProfiles).set({ bio: p.data.bio, preferredSports: sportKeys, preferredTime: serializeTimes(fd.getAll('time').map(String)), privacy: { showProfile, showHistory }, updatedAt: new Date() })
       .where(and(eq(schema.userProfiles.userId, user.id)));
   });
   redirect('/profile?saved=1');

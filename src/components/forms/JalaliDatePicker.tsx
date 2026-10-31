@@ -42,12 +42,12 @@ export function JalaliDatePicker({ name, defaultValue, placeholder = 'همه ت�
     <div className="relative" ref={ref}>
       <input type="hidden" name={name} value={value ? `${value.jy}-${pad(value.jm)}-${pad(value.jd)}` : ''} />
       <button type="button" aria-haspopup="dialog" aria-expanded={open} aria-controls={id}
-        onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-2 text-start">
-        <span className="min-w-0">
-          <span className="block text-[0.7rem] text-ink-500">{label}</span>
-          <span className={`block truncate text-sm font-semibold ${value ? 'text-ink-900' : 'text-ink-500'}`}>{text}</span>
+        onClick={() => setOpen((o) => !o)} className="block w-full text-start">
+        <span className="block text-[0.7rem] leading-4 text-ink-500">{label}</span>
+        <span className="flex items-center gap-2">
+          <span className={`h-7 min-w-0 flex-1 truncate text-sm font-semibold leading-7 ${value ? 'text-ink-900' : 'text-ink-500'}`}>{text}</span>
+          <CalendarDays className="h-5 w-5 shrink-0 text-ink-500" aria-hidden />
         </span>
-        <CalendarDays className="h-5 w-5 shrink-0 text-ink-500" aria-hidden />
       </button>
       {open && (
         <div id={id} role="dialog" aria-label="انتخاب تاریخ" className="absolute start-0 top-full z-50 mt-2 w-[19rem] rounded-2xl border border-line bg-white p-3 text-ink-900 shadow-xl">

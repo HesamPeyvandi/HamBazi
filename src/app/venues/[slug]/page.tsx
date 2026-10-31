@@ -129,7 +129,7 @@ export default async function VenuePage({ params, searchParams }: P) {
       <section className="card mt-8 p-6" aria-labelledby="loc-title">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 id="loc-title" className="section-title">موقعیت مکانی</h2>
-          {hasPos && <NavChooser lat={v.lat as number} lng={v.lng as number} />}
+          {hasPos && <NavChooser lat={v.lat as number} lng={v.lng as number} name={v.name} />}
         </div>
         <p className="flex items-start gap-2 text-sm"><MapPin className="mt-1 h-4 w-4 shrink-0 text-brand-600" aria-hidden />{cityName}، {v.neighborhood}<br />{v.address}</p>
         {v.openHours && <p className="mt-2 text-sm text-ink-500">ساعت فعالیت: {v.openHours}</p>}

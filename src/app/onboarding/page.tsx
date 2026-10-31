@@ -1,3 +1,4 @@
+import { parseTimes } from '@/lib/play-times';
 import { requireUser, safeRedirectPath } from '@/server/auth/rbac';
 import { getCities, getSportsList } from '@/server/venues/queries';
 import { getProfileData } from '@/server/profile';
@@ -17,7 +18,7 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
         <OnboardingForm next={next}
           sports={sports.map((s) => ({ key: s.key, nameFa: s.nameFa, skills: s.skillCategories }))}
           cities={cities}
-          defaults={{ name: user.displayName, city: city?.slug ?? cities[0]?.slug ?? 'semnan', sports: profile?.preferredSports ?? [], time: profile?.preferredTime ?? undefined,
+          defaults={{ name: user.displayName, city: city?.slug ?? cities[0]?.slug ?? 'semnan', sports: profile?.preferredSports ?? [], times: parseTimes(profile?.preferredTime),
             scores: Object.fromEntries(skills.map((s) => [s.sportKey, s.selfScores])) }} />
       </div>
     </div>

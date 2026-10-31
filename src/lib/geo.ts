@@ -11,12 +11,19 @@ export interface NavApp { key: string; label: string; href: string; hint: string
 const f = (n: number) => n.toFixed(6);
 
 /** Deep links that open the routing app (installed app via universal link, otherwise its website). */
-export function navApps(lat: number, lng: number): NavApp[] {
+/** RFC 5870 geo: URI. On Android every installed map/navigation app registers for it, so the OS shows its own chooser. */
+export function geoUri(lat: number, lng: number, label = ''): string {
+  const ll = `${f(lat)},${f(lng)}`;
+  return `geo:${ll}?q=${ll}${label ? `(${encodeURIComponent(label.replace(/[()]/g, ' '))})` : ''}`;
+}
+
+export function navApps(lat: number, lng: number, apple = false): NavApp[] {
   const ll = `${f(lat)},${f(lng)}`;
   return [
     { key: 'neshan', label: 'نشان', hint: 'مکان در نشان باز می‌شود', href: `https://nshn.ir/?lat=${f(lat)}&lng=${f(lng)}` },
     { key: 'balad', label: 'بلد', hint: 'مسیریابی در بلد', href: `https://balad.ir/route?destination=${ll}` },
     { key: 'waze', label: 'ویز', hint: 'مسیریابی در Waze', href: `https://waze.com/ul?ll=${ll}&navigate=yes` },
     { key: 'google', label: 'گوگل مپ', hint: 'مسیریابی در Google Maps', href: `https://www.google.com/maps/dir/?api=1&destination=${ll}&travelmode=driving` },
+    ...(apple ? [{ key: 'apple', label: 'Apple Maps', hint: 'مسیریابی در نقشهٔ آیفون', href: `https://maps.apple.com/?daddr=${ll}&dirflg=d` }] : []),
   ];
 }

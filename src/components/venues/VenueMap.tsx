@@ -1,8 +1,12 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Copy, Navigation, X } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { navApps } from '@/lib/geo';
+import { geoUri, navApps } from '@/lib/geo';
+
+const noop = () => () => {};
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 export const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const PIN = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46"><path d="M18 1C9 1 2 8 2 17c0 12 16 28 16 28s16-16 16-28C34 8 27 1 18 1z" fill="#02834a" stroke="#fff" stroke-width="2.5"/><circle cx="18" cy="17" r="6.5" fill="#fff"/></svg>';
@@ -26,8 +30,10 @@ export function VenueMap({ lat, lng, name }: { lat: number; lng: number; name: s
 }
 
 /** "Route me there": lets the visitor pick the app (Neshan, Balad, Waze, Google Maps) or copy the coordinates. */
-export function NavChooser({ lat, lng }: { lat: number; lng: number }) {
+export function NavChooser({ lat, lng, name }: { lat: number; lng: number; name: string }) {
   const [open, setOpen] = useState(false);
+  const android = useSyncExternalStore(noop, isAndroid, () => false);
+  const ios = useSyncExternalStore(noop, isIos, () => false);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -39,6 +45,8 @@ export function NavChooser({ lat, lng }: { lat: number; lng: number }) {
     const t = `${lat.toFixed(6)},${lng.toFixed(6)}`;
     try { await navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* clipboard unavailable (http) */ }
   }
+  // Android: a geo: link makes the phone itself show its "Open with" sheet (Balad, Neshan, Waze, Maps, ...) — the apps that are really installed.
+  if (android) return <a href={geoUri(lat, lng, name)} className="btn btn-primary"><Navigation className="h-4 w-4" aria-hidden />مسیریابی</a>;
   return (
     <>
       <button type="button" className="btn btn-primary" onClick={() => setOpen(true)} aria-haspopup="dialog"><Navigation className="h-4 w-4" aria-hidden />مسیریابی</button>
@@ -48,7 +56,7 @@ export function NavChooser({ lat, lng }: { lat: number; lng: number }) {
             <div className="mb-3 flex items-center justify-between"><h3 className="font-extrabold">مسیریابی با…</h3>
               <button type="button" onClick={() => setOpen(false)} aria-label="بستن" className="grid h-8 w-8 place-items-center rounded-full hover:bg-page"><X className="h-4 w-4" aria-hidden /></button></div>
             <ul className="space-y-2">
-              {navApps(lat, lng).map((a) => (
+              {navApps(lat, lng, ios).map((a) => (
                 <li key={a.key}><a href={a.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex items-center justify-between rounded-xl border border-line px-4 py-3 hover:border-brand-600 hover:bg-brand-50">
                   <span className="font-bold">{a.label}</span><span className="text-xs text-ink-500">{a.hint}</span></a></li>))}
             </ul>

@@ -67,12 +67,12 @@ check('no install button without a prompt event', (await p.locator('footer butto
 await p.evaluate(() => window.dispatchEvent(Object.assign(new Event('beforeinstallprompt'), { prompt: async () => {}, userChoice: Promise.resolve({ outcome: 'dismissed' }) })));
 check('install button appears on beforeinstallprompt', (await p.locator('footer button:has-text("نصب")').count()) === 1);
 
-// ---------- axe accessibility pass (serious + critical only)
+// ---------- axe accessibility pass (serious + critical only). meta-viewport is disabled on purpose: zoom is off by product decision (phase 8c).
 const venueSlug = psql(`select slug from venues where status='published' order by created_at limit 1`);
 const scan = async (page, path, label) => {
   await page.goto(BASE + path, { waitUntil: 'networkidle' });
   await page.evaluate(axeSrc);
-  const res = await page.evaluate(async () => (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa'] })).violations.filter((v) => ['serious', 'critical'].includes(v.impact)).map((v) => ({ id: v.id, n: v.nodes.length, ex: v.nodes[0].target.join(' ').slice(0, 80) })));
+  const res = await page.evaluate(async () => (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa'], rules: { 'meta-viewport': { enabled: false } } })).violations.filter((v) => ['serious', 'critical'].includes(v.impact)).map((v) => ({ id: v.id, n: v.nodes.length, ex: v.nodes[0].target.join(' ').slice(0, 80) })));
   check(`axe ${label}: no serious/critical violations`, res.length === 0, JSON.stringify(res).slice(0, 400));
 };
 const g = anon; const gp = await g.newPage();

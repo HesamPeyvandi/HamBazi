@@ -1,7 +1,8 @@
 import { currentUser } from '@/server/auth/session';
 import { favoriteIds } from '@/server/favorites';
 import Link from 'next/link';
-import { ShieldCheck, Star, Users, Zap, ArrowLeft, Volleyball, LayoutGrid } from 'lucide-react';
+import { SoccerBall } from '@/components/ui/SoccerBall';
+import { ShieldCheck, Star, Users, Zap, ArrowLeft, Volleyball } from 'lucide-react';
 import { SearchBar } from '@/components/venues/SearchBar';
 import { VenueGridCard } from '@/components/venues/VenueCard';
 import { featuredVenues, getCities, getSportsList } from '@/server/venues/queries';
@@ -41,7 +42,7 @@ export default async function HomePage() {
               <li key={s.key}>
                 <Link href={`/venues?sport=${s.key}`} className="flex flex-col items-center gap-2 text-sm font-semibold">
                   <span className={`grid h-16 w-16 place-items-center rounded-full ${s.key === 'futsal' ? 'bg-brand-600' : 'bg-[#575a86]'}`}>
-                    {s.key === 'futsal' ? <LayoutGrid className="h-7 w-7" aria-hidden /> : <Volleyball className="h-7 w-7" aria-hidden />}
+                    {s.key === 'futsal' ? <SoccerBall className="h-8 w-8" /> : <Volleyball className="h-7 w-7" aria-hidden />}
                   </span>{s.nameFa}
                 </Link>
               </li>

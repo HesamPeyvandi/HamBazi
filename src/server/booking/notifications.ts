@@ -13,3 +13,6 @@ export async function unreadChatCount(userId: string) {
 }
 export const listNotifications = (userId: string) => db().select().from(schema.notifications).where(eq(schema.notifications.userId, userId)).orderBy(desc(schema.notifications.createdAt)).limit(100);
 export const markAllRead = (userId: string) => db().update(schema.notifications).set({ readAt: new Date() }).where(and(eq(schema.notifications.userId, userId), isNull(schema.notifications.readAt)));
+/** Opening the notifications page: marks everything except chat news as read (chat news is cleared by reading the room). */
+export const markSeen = (userId: string) => db().update(schema.notifications).set({ readAt: new Date() })
+  .where(and(eq(schema.notifications.userId, userId), isNull(schema.notifications.readAt), sql`${schema.notifications.type} <> 'chat_message'`));

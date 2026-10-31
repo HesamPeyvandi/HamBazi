@@ -165,11 +165,12 @@ check('session confirmed when minimum reached', (await bp.locator('text=قطعی
 await bp.screenshot({ path: `${SHOTS}/session-joined.png`, fullPage: true });
 await ap.goto(sessionUrl, { waitUntil: 'networkidle' });
 check('host sees participant payment status', (await ap.locator('text=پرداخت شد').count()) >= 2);
+await ap.goto(BASE + '/sessions', { waitUntil: 'networkidle' });
+const bell = await ap.locator('header a[href="/notifications"]').getAttribute('aria-label');
+check('header bell shows unread count', /خوانده‌نشده/.test(bell ?? ''), bell ?? '');
 await ap.goto(BASE + '/notifications', { waitUntil: 'networkidle' });
 check('host received persistent notifications', (await ap.locator('main li, .container-page li').count()) >= 2);
 await ap.screenshot({ path: `${SHOTS}/notifications.png`, fullPage: true });
-const bell = await ap.locator('header a[href="/notifications"]').getAttribute('aria-label');
-check('header bell shows unread count', /خوانده‌نشده/.test(bell ?? ''), bell ?? '');
 
 // ---------- joiner leaves -> refund policy applied
 await bp.goto(sessionUrl); await bp.click('button:has-text("خروج از سانس")'); await bp.waitForURL('**ok=left_refund');

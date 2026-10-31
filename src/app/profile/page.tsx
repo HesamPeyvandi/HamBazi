@@ -1,3 +1,4 @@
+import { timesLabel } from '@/lib/play-times';
 import Link from 'next/link';
 import { Pencil, LogOut, MapPin, Clock, ShieldCheck, Gauge } from 'lucide-react';
 import { requireUser } from '@/server/auth/rbac';
@@ -10,7 +11,6 @@ import { toFa } from '@/lib/i18n/digits';
 
 export const metadata = { title: 'پروفایل من' };
 const LEVEL: Record<string, string> = { beginner: 'مبتدی', intermediate: 'متوسط', pro: 'حرفه‌ای' };
-const TIME: Record<string, string> = { morning: 'صبح', afternoon: 'ظهر و عصر', evening: 'عصر و شب', night: 'آخر شب' };
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const user = await requireUser('/profile');
@@ -31,7 +31,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               <h1 className="truncate text-2xl font-extrabold">{user.displayName}</h1>
               <p className="mt-1 flex flex-wrap items-center gap-3 text-sm text-white/80">
                 {city && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" aria-hidden />{city.nameFa}</span>}
-                {profile?.preferredTime && <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" aria-hidden />{TIME[profile.preferredTime]}</span>}
+                {profile?.preferredTime && <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" aria-hidden />{timesLabel(profile.preferredTime)}</span>}
               </p>
               <p className="mt-1 text-xs text-white/70">شمارهٔ شما (فقط برای خودتان): <bdi>{formatPhoneDisplay(user.phoneE164)}</bdi></p>
             </div>
