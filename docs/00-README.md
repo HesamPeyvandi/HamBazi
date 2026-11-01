@@ -23,6 +23,7 @@ Status: **Phase 5 complete** (automatic split payment, teams & matching, English
 | [15-phase8-handoff](15-phase8-handoff.md) | تحویل فاز ۸: PWA، صفحهٔ آفلاین، بررسی دسترس‌پذیری، اصلاحات چت |
 | [16-phase8b-handoff](16-phase8b-handoff.md) | اصلاحیهٔ فاز ۸: چت پیام‌رسان‌گونه، نقشه و مسیریابی، هدر شفاف، OVR |
 | [17-phase8c-handoff](17-phase8c-handoff.md) | اصلاحیهٔ ۳ فاز ۸: ترازبندی، زمان بازی چندانتخابی، مسیریابی بومی، نشان اعلان، بدون زوم |
+| [18-phase9-handoff](18-phase9-handoff.md) | تحویل فاز ۹: سخت‌سازی، پیامک کاوه‌نگار، سئو، پاک‌سازی |
 | [FONT](FONT.md) | How to replace the brand font |
 | [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 

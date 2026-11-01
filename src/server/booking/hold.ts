@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gt, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Tx } from './core';
 import { E } from './errors';
@@ -34,4 +34,12 @@ export async function loadBookable(tx: Tx, slotId: string) {
 export async function policies(tx: Tx) {
   const [fee, cancel] = await Promise.all([activeFeePolicy(tx), activeCancellationPolicy(tx)]);
   return { fee, cancel };
+}
+
+export const MAX_ACTIVE_HOLDS = 3;
+/** A user may hold only a few unpaid slots at once, so nobody can block every slot of a venue for 15 minutes at a time. */
+export async function assertHoldCap(tx: Tx, userId: string, now = new Date()) {
+  const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(schema.reservations)
+    .where(and(eq(schema.reservations.hostUserId, userId), eq(schema.reservations.status, 'awaiting_payment'), gt(schema.reservations.holdExpiresAt, now)));
+  if (n >= MAX_ACTIVE_HOLDS) throw E.invalid('چند رزرو پرداخت‌نشده دارید. ابتدا آن‌ها را پرداخت یا لغو کنید و سپس دوباره تلاش کنید.');
 }

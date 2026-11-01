@@ -5,10 +5,14 @@ import { FooterGate } from '@/components/layout/FooterGate';
 import { Footer } from '@/components/layout/Footer';
 import { DemoBanner } from '@/components/layout/DemoBanner';
 import { BottomNav } from '@/components/layout/NavLinks';
+import { ZoomLock } from '@/components/layout/ZoomLock';
 import { PwaRegister } from '@/components/layout/PwaClient';
 import { currentUser } from '@/server/auth/session';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? 'http://localhost:3000'),
+  openGraph: { type: 'website', locale: 'fa_IR', siteName: 'هم‌بازی', images: [{ url: '/icons/icon-512.png', width: 512, height: 512 }] },
+  twitter: { card: 'summary' },
   title: { default: 'هم‌بازی — رزرو سالن ورزشی و پیدا کردن هم‌بازی', template: '%s | هم‌بازی' },
   description: 'رزرو آسان سالن‌های ورزشی، پیدا کردن هم‌بازی و پرداخت مطمئن؛ همه در یک پلتفرم.',
   appleWebApp: { capable: true, title: 'هم‌بازی', statusBarStyle: 'black-translucent' },
@@ -23,6 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-3">پرش به محتوای اصلی</a>
         <PwaRegister />
+        <ZoomLock />
         <DemoBanner />
         <Header />
         <main id="main">{children}</main>

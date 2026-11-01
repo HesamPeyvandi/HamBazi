@@ -18,12 +18,26 @@ class MockSmsProvider implements SmsProvider {
   }
 }
 
-/** Placeholder for a real Iranian SMS panel (Kavenegar, Melipayamak, ...). Wire credentials via env. */
-class UnconfiguredSmsProvider implements SmsProvider {
-  readonly name = 'unconfigured';
-  constructor(private reason: string) {}
-  async sendOtp(): Promise<void> {
-    throw new Error(`SMS provider is not configured: ${this.reason}`);
+/**
+ * Kavenegar "verify/lookup" (template-based OTP). The template (SMS_TEMPLATE) must be created in the Kavenegar panel and
+ * contain the token placeholder `%token`. The code is sent as the token and is never logged.
+ */
+class KavenegarSmsProvider implements SmsProvider {
+  readonly name = 'kavenegar';
+  constructor(private apiKey: string, private template: string) {}
+  async sendOtp(phoneE164: string, code: string) {
+    const receptor = phoneE164.replace(/^\+98/, '0'); // +98912... -> 0912...
+    const body = new URLSearchParams({ receptor, token: code, template: this.template });
+    let res: Response;
+    try {
+      res = await fetch(`https://api.kavenegar.com/v1/${encodeURIComponent(this.apiKey)}/verify/lookup.json`, {
+        method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(8000), cache: 'no-store',
+      });
+    } catch {
+      throw new Error('SMS provider unreachable'); // no details: the URL contains the API key
+    }
+    const j = (await res.json().catch(() => null)) as { return?: { status?: number } } | null;
+    if (!res.ok || j?.return?.status !== 200) throw new Error(`SMS provider rejected the request (http ${res.status}, status ${j?.return?.status ?? 'n/a'})`);
   }
 }
 
@@ -33,8 +47,8 @@ export function getSmsProvider(): SmsProvider {
     if (e.isProduction) throw new Error('Mock SMS provider is forbidden in production');
     return new MockSmsProvider();
   }
-  // Real providers are added here in Phase 8 / when the panel is chosen (no auth logic changes needed).
-  return new UnconfiguredSmsProvider(`provider "${e.smsProvider}" has no adapter yet`);
+  if (e.smsProvider === 'kavenegar') return new KavenegarSmsProvider(e.smsApiKey, e.smsTemplate);
+  throw new Error(`SMS provider "${e.smsProvider}" is not supported`);
 }
 
 /** The code may be shown on screen only when the mock provider is active outside production. */

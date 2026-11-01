@@ -3,7 +3,7 @@ import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { cancelOpenIntents, notify, refundIntent, succeededIntents, type Tx } from './core';
 import { E } from './errors';
-import { acquireSlot, loadBookable, policies } from './hold';
+import { acquireSlot, assertHoldCap, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { splitShare } from './money';
 import { lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
@@ -26,6 +26,7 @@ export async function settleStale(sessionId: string) { await db().transaction((t
 
 export async function createOpenSession(hostUserId: string, i: CreateSessionInput, now = new Date()) {
   return db().transaction(async (tx) => {
+    await assertHoldCap(tx, hostUserId, now);
     const { slot, venue, venueSport } = await loadBookable(tx, i.slotId);
     if (!venueSport) throw E.notFound();
     const skillMin = i.skillMin ?? 0, skillMax = i.skillMax ?? 99;

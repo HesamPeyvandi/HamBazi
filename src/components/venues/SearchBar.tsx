@@ -2,7 +2,6 @@ import { MapPin, Trophy, Clock, Search, ChevronDown } from 'lucide-react';
 import { JalaliDatePicker } from '@/components/forms/JalaliDatePicker';
 import { toFa } from '@/lib/i18n/digits';
 
-export const HOURS = [16, 17, 19, 20, 22];
 export const HOUR_OPTIONS = [16, 17, 19, 20, 21, 22];
 
 /** One field: small caption on top, then ONE row holding value + chevron + icon, so icon, text and chevron share a horizontal line. */

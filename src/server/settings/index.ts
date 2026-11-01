@@ -11,8 +11,6 @@ export const DEFAULTS = {
   session_ttl_days: 30,
   hold_minutes: 15,
   join_deadline_hours: 24,
-  fee_percent_bp: 500, // 5% in basis points (used from Phase 2)
-  fee_min_toman: 5000,
 } as const;
 export type SettingKey = keyof typeof DEFAULTS;
 

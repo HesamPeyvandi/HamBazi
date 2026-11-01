@@ -3,7 +3,7 @@ import { db, schema } from '@/db/client';
 import { audit } from '@/server/audit';
 import { cancelOpenIntents, notify, notifyManagers, refundIntent, releaseSlot, succeededIntents, type Reservation, type Tx } from './core';
 import { E } from './errors';
-import { acquireSlot, loadBookable, policies } from './hold';
+import { acquireSlot, assertHoldCap, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { cancelSessionInternal, lockSlot, lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
 import { calcFee } from './money';
@@ -14,6 +14,7 @@ const bump = sql`${schema.reservations.version} + 1`;
 /** Full-venue reservation with a server-enforced hold + the payment intent the host must complete. */
 export async function createFullReservation(hostUserId: string, slotId: string) {
   return db().transaction(async (tx) => {
+    await assertHoldCap(tx, hostUserId);
     const { slot, venue, venueSport } = await loadBookable(tx, slotId);
     if (!venueSport) throw E.notFound();
     const { fee, cancel } = await policies(tx);
@@ -40,6 +41,7 @@ export async function cancelReservationByPlayer(userId: string, reservationId: s
       const locked = s && (await lockSession(tx, s.id));
       if (!locked || ['cancelled', 'expired', 'completed'].includes(locked.status)) throw E.badState();
       const [slot] = await tx.select().from(schema.timeSlots).where(eq(schema.timeSlots.id, pre.slotId));
+      if (slot.startsAt <= now) throw E.invalid('بازی شروع شده است و لغو ممکن نیست.');
       const pct = playerRefundPercent(pre, slot.startsAt, now);
       const [hp] = await tx.select().from(schema.sessionParticipants).where(and(eq(schema.sessionParticipants.sessionId, locked.id), eq(schema.sessionParticipants.isHost, true)));
       await cancelSessionInternal(tx, locked, { by: 'player', reason: 'host_cancelled', status: 'cancelled', hostRefundPercent: pct });
@@ -50,6 +52,7 @@ export async function cancelReservationByPlayer(userId: string, reservationId: s
     const [r] = await tx.select().from(schema.reservations).where(eq(schema.reservations.id, reservationId)).for('update');
     if (!['awaiting_payment', 'confirmed'].includes(r.status)) throw E.badState();
     const [slot] = await tx.select().from(schema.timeSlots).where(eq(schema.timeSlots.id, r.slotId));
+    if (r.status === 'confirmed' && slot.startsAt <= now) throw E.invalid('بازی شروع شده است و لغو ممکن نیست.');
     const pct = r.status === 'confirmed' ? playerRefundPercent(r, slot.startsAt, now) : 0;
     await finishCancel(tx, r, 'player', 'player_cancelled', pct);
     if (r.status === 'confirmed' && pct < 100) await recordReliability(tx, userId, r.id, 'late_cancel');

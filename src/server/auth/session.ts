@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, eq, gt, isNull, lt } from 'drizzle-orm';
 import { cookies, headers } from 'next/headers';
 import { db, schema } from '@/db/client';
 import { env } from '../env';
@@ -23,7 +23,11 @@ export async function getUserBySessionToken(token: string | undefined | null) {
     .from(schema.userSessions).innerJoin(schema.users, eq(schema.users.id, schema.userSessions.userId))
     .where(and(eq(schema.userSessions.tokenHash, sha256(token)), isNull(schema.userSessions.revokedAt),
       gt(schema.userSessions.expiresAt, new Date()), eq(schema.users.status, 'active'))).limit(1);
-  return rows[0]?.user ?? null;
+  if (!rows[0]) return null;
+  // "Last activity" shown in settings: refreshed at most every 10 minutes per session (one cheap conditional update).
+  await db().update(schema.userSessions).set({ lastSeenAt: new Date() })
+    .where(and(eq(schema.userSessions.id, rows[0].sessionId), lt(schema.userSessions.lastSeenAt, new Date(Date.now() - 600_000))));
+  return rows[0].user;
 }
 
 export async function revokeSessionToken(token: string) {

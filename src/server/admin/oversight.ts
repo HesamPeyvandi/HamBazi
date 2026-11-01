@@ -60,7 +60,3 @@ export async function setReviewHidden(a: Actor, reviewId: string, hide: boolean,
     await audit(a.id, hide ? 'review.hide' : 'review.restore', 'venue_review', reviewId, { note: note.slice(0, 300), venueId: r.venueId });
   });
 }
-export const reviewStats = async () => {
-  const [r] = await db().select({ hidden: sql<number>`count(*) FILTER (WHERE hidden_at IS NOT NULL)::int`, total: sql<number>`count(*)::int` }).from(schema.venueReviews);
-  return r;
-};

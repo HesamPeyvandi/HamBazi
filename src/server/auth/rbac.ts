@@ -29,11 +29,6 @@ export async function canManageVenue(user: Pick<SessionUser, 'id' | 'role'>, ven
     .where(and(eq(schema.venueManagers.venueId, venueId), eq(schema.venueManagers.userId, user.id))).limit(1);
   return rows.length > 0;
 }
-export async function requireVenueManager(venueId: string): Promise<SessionUser> {
-  const u = await requireUser();
-  if (!(await canManageVenue(u, venueId))) throw new ForbiddenError();
-  return u;
-}
 
 /** Only same-site relative paths. Blocks //evil.com, /\evil.com, absolute URLs, control chars. */
 export function safeRedirectPath(p: string | null | undefined, fallback = '/'): string {

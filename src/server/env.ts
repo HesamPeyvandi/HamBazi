@@ -18,6 +18,7 @@ export interface Env {
   appUrl: string;
   smsProvider: string;
   smsApiKey: string;
+  smsTemplate: string;
   paymentMode: PaymentMode;
   isProduction: boolean;
   isDemoLike: boolean; // development or demo
@@ -35,6 +36,7 @@ export function readEnv(src: Record<string, string | undefined> = process.env): 
     appUrl: src.APP_URL ?? 'http://localhost:3000',
     smsProvider: src.SMS_PROVIDER ?? (appEnv === 'production' ? '' : 'mock'),
     smsApiKey: src.SMS_API_KEY ?? '',
+    smsTemplate: src.SMS_TEMPLATE ?? '',
     paymentMode: ['disabled', 'simulated', 'sandbox', 'live'].includes(pm) ? pm : 'disabled',
     isProduction: appEnv === 'production',
     isDemoLike: appEnv !== 'production',
@@ -50,6 +52,8 @@ export function validateEnv(env: Env): string[] {
   if (env.isProduction) {
     if (env.smsProvider === 'mock') errors.push('SMS_PROVIDER=mock is forbidden in production');
     if (!env.smsProvider) errors.push('A real SMS provider must be configured in production');
+    if (env.smsProvider === 'kavenegar' && (!env.smsApiKey || !env.smsTemplate)) errors.push('SMS_PROVIDER=kavenegar requires SMS_API_KEY and SMS_TEMPLATE');
+    if (env.smsProvider && !['kavenegar', 'mock'].includes(env.smsProvider)) errors.push(`Unknown SMS_PROVIDER "${env.smsProvider}" (supported: kavenegar)`);
     if (env.paymentMode === 'simulated') errors.push('PAYMENT_MODE=simulated is forbidden in production');
     if (/not-for-production|change-me/.test(env.otpSecret + env.sessionSecret))
       errors.push('Placeholder secrets are forbidden in production');

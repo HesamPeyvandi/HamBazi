@@ -59,7 +59,7 @@ async function main() {
   const sportId = { futsal: futsal.id, volleyball: volley.id } as Record<string, string>;
 
   await d.insert(schema.platformSettings).values([
-    { key: 'hold_minutes', value: 15 }, { key: 'fee_percent_bp', value: 500 }, { key: 'fee_min_toman', value: 5000 },
+    { key: 'hold_minutes', value: 15 }, 
   ]);
 
   const users = await d.insert(schema.users).values(USERS.map(([phoneE164, displayName, role, av]) => ({

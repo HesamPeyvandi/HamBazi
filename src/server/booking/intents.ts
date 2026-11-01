@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import { env } from '@/server/env';
 import { recordEvent, type Tx } from './core';
@@ -25,8 +24,3 @@ export async function createIntent(tx: Tx, a: { reservationId: string; payerUser
   return row;
 }
 
-export async function activeIntentFor(tx: Tx, reservationId: string, payerUserId: string) {
-  const [i] = await tx.select().from(schema.paymentIntents).where(and(eq(schema.paymentIntents.reservationId, reservationId),
-    eq(schema.paymentIntents.payerUserId, payerUserId), inArray(schema.paymentIntents.status, ['created', 'succeeded'])));
-  return i;
-}

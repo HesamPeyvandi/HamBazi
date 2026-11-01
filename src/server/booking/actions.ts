@@ -7,12 +7,13 @@ import { cancelReservationByPlayer, createFullReservation } from './reservations
 import { createOpenSession, joinSession, leaveSession, updateSessionDetails } from './sessions';
 import { simulatePay } from './settle';
 import { joinWaitlist, leaveWaitlist } from './waitlist';
-import { markAllRead } from './notifications';
 import { normalizeDigits } from '@/lib/i18n/digits';
 import { db, schema } from '@/db/client';
 import { eq } from 'drizzle-orm';
 
-const UUID = /^[0-9a-f-]{36}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Ids come from the URL/form, so a malformed one goes back to a safe page instead of reaching Postgres (22P02 => 500). */
+const guard = (id: string, fallback = '/venues') => { if (!UUID.test(id)) redirect(fallback); };
 const num = (v: FormDataEntryValue | null, d = 0) => { const n = parseInt(normalizeDigits(String(v ?? '')).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : d; };
 const back = (path: string, msg: string): never => redirect(`${path}${path.includes('?') ? '&' : '?'}err=${encodeURIComponent(msg)}`);
 /** Runs a service call; business errors go back to the page with a Persian message, unexpected ones bubble up. */
@@ -31,7 +32,7 @@ export async function createSessionAction(slotId: string, fd: FormData) {
   const u = await requireUser(`/book/${slotId}`);
   const [slot] = UUID.test(slotId) ? await db().select().from(schema.timeSlots).where(eq(schema.timeSlots.id, slotId)) : [];
   if (!slot) redirect('/venues');
-  const hours = num(fd.get('deadlineHours'), 24);
+  const hours = Math.min(Math.max(num(fd.get('deadlineHours'), 24), 1), 24 * 60);
   const r = await run(`/book/${slotId}`, () => createOpenSession(u.id, {
     slotId, targetCount: num(fd.get('target')),
     skillMin: num(fd.get('skillMin'), 0), skillMax: num(fd.get('skillMax'), 99),
@@ -42,46 +43,48 @@ export async function createSessionAction(slotId: string, fd: FormData) {
 }
 
 export async function joinSessionAction(sessionId: string, token: string | undefined) {
+  guard(sessionId);
   const path = `/sessions/${sessionId}${token ? `?t=${token}` : ''}`;
   const u = await requireUser(path);
   const r = await run(path, () => joinSession(u.id, sessionId, { inviteToken: token }));
   redirect(`/pay/${r.intentId}`);
 }
 export async function leaveSessionAction(sessionId: string) {
+  guard(sessionId);
   const u = await requireUser(`/sessions/${sessionId}`);
   const r = await run(`/sessions/${sessionId}`, () => leaveSession(u.id, sessionId));
   revalidatePath(`/sessions/${sessionId}`);
   redirect(`/sessions/${sessionId}?ok=${r.refundPercent > 0 ? 'left_refund' : 'left'}`);
 }
 export async function updateSessionAction(sessionId: string, fd: FormData) {
+  guard(sessionId);
   const u = await requireUser(`/sessions/${sessionId}`);
   await run(`/sessions/${sessionId}`, () => updateSessionDetails(u.id, sessionId, { description: String(fd.get('description') ?? ''), visibility: fd.get('visibility') === 'invite_only' ? 'invite_only' : 'public' }));
   redirect(`/sessions/${sessionId}?ok=updated`);
 }
 
 export async function payAction(intentId: string) {
+  guard(intentId);
   const u = await requireUser(`/pay/${intentId}`);
   const r = await run(`/pay/${intentId}`, () => simulatePay(u.id, intentId));
   redirect(r.sessionId ? `/sessions/${r.sessionId}?ok=paid` : `/reservations/${r.reservationId}?ok=paid`);
 }
 export async function cancelReservationAction(reservationId: string) {
+  guard(reservationId);
   const u = await requireUser(`/reservations/${reservationId}`);
   const r = await run(`/reservations/${reservationId}`, () => cancelReservationByPlayer(u.id, reservationId));
   redirect(`/reservations/${reservationId}?ok=cancelled&pct=${r.refundPercent}`);
 }
-export async function markNotificationsReadAction() {
-  const u = await requireUser('/notifications');
-  await markAllRead(u.id);
-  revalidatePath('/notifications');
-}
 
 export async function joinWaitlistAction(sessionId: string, token: string | undefined) {
+  guard(sessionId);
   const path = `/sessions/${sessionId}${token ? `?t=${token}` : ''}`;
   const u = await requireUser(path);
   await run(path, () => joinWaitlist(u.id, sessionId, { inviteToken: token }));
   redirect(`/sessions/${sessionId}?ok=waitlisted${token ? `&t=${token}` : ''}`);
 }
 export async function leaveWaitlistAction(sessionId: string) {
+  guard(sessionId);
   const u = await requireUser(`/sessions/${sessionId}`);
   await leaveWaitlist(u.id, sessionId);
   redirect(`/sessions/${sessionId}?ok=unwaitlisted`);

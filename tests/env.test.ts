@@ -21,12 +21,21 @@ describe('APP_ENV', () => {
     expect(validateEnv(readEnv({ ...good, APP_ENV: 'production' })).join()).toMatch(/real SMS provider/);
   });
   it('production with real provider and disabled payments is valid', () => {
-    expect(validateEnv(readEnv({ ...good, APP_ENV: 'production', SMS_PROVIDER: 'kavenegar' }))).toEqual([]);
+    expect(validateEnv(readEnv({ ...good, APP_ENV: 'production', SMS_PROVIDER: 'kavenegar', SMS_API_KEY: 'k', SMS_TEMPLATE: 't' }))).toEqual([]);
   });
   it('demo/dev allow the mock provider', () => {
     expect(validateEnv(readEnv({ ...good, APP_ENV: 'demo', SMS_PROVIDER: 'mock', PAYMENT_MODE: 'simulated' }))).toEqual([]);
   });
   it('rejects short secrets', () => {
     expect(validateEnv(readEnv({ ...good, OTP_HMAC_SECRET: 'x', APP_ENV: 'development' })).join()).toMatch(/OTP_HMAC_SECRET/);
+  });
+});
+
+describe('kavenegar configuration', () => {
+  const base = { DATABASE_URL: 'postgres://x', OTP_HMAC_SECRET: 'a'.repeat(40), SESSION_SECRET: 'b'.repeat(40), APP_ENV: 'production', PAYMENT_MODE: 'disabled' };
+  it('requires key and template, and rejects unknown providers', () => {
+    expect(validateEnv(readEnv({ ...base, SMS_PROVIDER: 'kavenegar' })).join()).toMatch(/SMS_API_KEY and SMS_TEMPLATE/);
+    expect(validateEnv(readEnv({ ...base, SMS_PROVIDER: 'kavenegar', SMS_API_KEY: 'k', SMS_TEMPLATE: 't' }))).toEqual([]);
+    expect(validateEnv(readEnv({ ...base, SMS_PROVIDER: 'foo' })).join()).toMatch(/Unknown SMS_PROVIDER/);
   });
 });

@@ -190,12 +190,30 @@ describe('production safety of the SMS layer', () => {
     prod('mock');
     expect(() => getSmsProvider()).toThrow(/forbidden in production/);
   });
-  it('production without an adapter fails visibly instead of faking delivery', async () => {
-    prod('kavenegar');
-    await expect(getSmsProvider().sendOtp(PHONE, '123456')).rejects.toThrow(/not configured/);
+  it('an unsupported provider refuses to start in production', () => {
+    prod('foo');
+    expect(() => getSmsProvider()).toThrow(/Unknown SMS_PROVIDER/);
   });
-  it('requestOtp reports sms_failed (no silent success) when the provider is unavailable', async () => {
+  it('kavenegar without key/template refuses to start in production', () => {
     prod('kavenegar');
-    expect(await requestOtp(PHONE)).toMatchObject({ ok: false, error: 'sms_failed' });
+    expect(() => getSmsProvider()).toThrow(/SMS_API_KEY and SMS_TEMPLATE/);
+  });
+  it('kavenegar sends the local-format number and the code as token, and fails visibly on a provider error', async () => {
+    prod('kavenegar');
+    Object.assign(process.env, { SMS_API_KEY: 'KEY', SMS_TEMPLATE: 'otp' });
+    __resetEnvCache();
+    const calls: { url: string; body: string }[] = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init: RequestInit) => { calls.push({ url, body: String(init.body) }); return new Response(JSON.stringify({ return: { status: 200 } }), { status: 200 }); }) as typeof fetch;
+    try {
+      await getSmsProvider().sendOtp(PHONE, '123456');
+      expect(calls[0].url).toBe('https://api.kavenegar.com/v1/KEY/verify/lookup.json');
+      expect(calls[0].body).toBe('receptor=09121234567&token=123456&template=otp');
+      globalThis.fetch = (async () => new Response(JSON.stringify({ return: { status: 411 } }), { status: 412 })) as typeof fetch;
+      await expect(getSmsProvider().sendOtp(PHONE, '123456')).rejects.toThrow(/rejected/);
+      globalThis.fetch = (async () => { throw new Error('boom KEY'); }) as typeof fetch;
+      await expect(getSmsProvider().sendOtp(PHONE, '123456')).rejects.toThrow(/unreachable/);
+      expect(await requestOtp(PHONE)).toMatchObject({ ok: false, error: 'sms_failed' });
+    } finally { globalThis.fetch = realFetch; }
   });
 });

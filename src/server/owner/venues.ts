@@ -31,13 +31,15 @@ export async function addStaff(actor: Actor, venueId: string, phoneInput: string
   const phone = normalizeIranMobile(phoneInput);
   if (!phone) throw E.invalid('شمارهٔ موبایل معتبر نیست.');
   const [u] = await db().select().from(schema.users).where(eq(schema.users.phoneE164, phone));
-  if (!u || u.status !== 'active') throw E.invalid('کاربری با این شماره در همبازی ثبت‌نام نکرده است.');
+  if (!u || u.status !== 'active') throw E.invalid('افزودن با این شماره ممکن نشد. مطمئن شوید این فرد قبلاً در هم‌بازی ثبت‌نام کرده است.');
   if (u.role === 'admin') throw E.invalid('این کاربر مدیر سامانه است و نیازی به افزودن ندارد.');
+  const [vn] = await db().select({ name: schema.venues.name }).from(schema.venues).where(eq(schema.venues.id, venueId));
   const [ex] = await db().select().from(schema.venueManagers).where(and(eq(schema.venueManagers.venueId, venueId), eq(schema.venueManagers.userId, u.id)));
   if (ex) throw E.invalid('این کاربر قبلاً به سالن اضافه شده است.');
   await db().transaction(async (tx) => {
     if (u.role === 'player') await tx.update(schema.users).set({ role: 'venue_manager' }).where(eq(schema.users.id, u.id));
     await tx.insert(schema.venueManagers).values({ venueId, userId: u.id, role: 'staff' });
+    await tx.insert(schema.notifications).values({ userId: u.id, type: 'staff_added', title: 'به‌عنوان کارمند سالن اضافه شدید', body: `${vn?.name ?? 'یک سالن'} شما را به‌عنوان کارمند اضافه کرد.`, link: '/owner' });
   });
   await audit(actor.id, 'venue.staff_add', 'venue', venueId, { userId: u.id });
 }
@@ -45,6 +47,10 @@ export async function removeStaff(actor: Actor, venueId: string, userId: string)
   await assertManages(actor, venueId, 'owner');
   const r = await db().delete(schema.venueManagers).where(and(eq(schema.venueManagers.venueId, venueId), eq(schema.venueManagers.userId, userId), eq(schema.venueManagers.role, 'staff'))).returning();
   if (!r.length) throw E.notFound();
+  // A user who was only promoted because of this staff role goes back to being a player once they manage no venue.
+  const [still] = await db().select({ n: sql<number>`count(*)::int` }).from(schema.venueManagers).where(eq(schema.venueManagers.userId, userId));
+  const [own] = await db().select({ n: sql<number>`count(*)::int` }).from(schema.venues).where(eq(schema.venues.ownerUserId, userId));
+  if (!still.n && !own.n) await db().update(schema.users).set({ role: 'player' }).where(and(eq(schema.users.id, userId), eq(schema.users.role, 'venue_manager')));
   await audit(actor.id, 'venue.staff_remove', 'venue', venueId, { userId });
 }
 
@@ -171,6 +177,9 @@ export async function createSlots(actor: Actor, venueId: string, b: SlotBatch, n
   const price = b.price ?? vs.pricePerSlot;
   if (!Number.isInteger(price) || price < 10_000) throw E.invalid('قیمت معتبر نیست.');
   if (b.days.length === 0 || b.days.length > 31) throw E.invalid('تعداد روزها معتبر نیست.');
+  const okInt = (n: number, lo: number, hi: number) => Number.isInteger(n) && n >= lo && n <= hi;
+  if (!okInt(b.startHour, 0, 23) || !okInt(b.startMin, 0, 59) || !okInt(b.endHour, 1, 24) || b.endHour * 60 <= b.startHour * 60 + b.startMin) throw E.invalid('بازهٔ ساعت معتبر نیست.');
+  if (b.days.some((d) => !okInt(d.y, 2000, 2200) || !okInt(d.m, 1, 12) || !okInt(d.d, 1, 31))) throw E.invalid('تاریخ معتبر نیست.');
   let created = 0, skipped = 0;
   for (const day of b.days) {
     let t = b.startHour * 60 + b.startMin;
