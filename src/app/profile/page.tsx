@@ -27,15 +27,15 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <div className="relative bg-gradient-to-l from-brand-800 to-brand-950 p-6 text-white">
           <div className="flex items-center gap-4">
             <Avatar seed={user.id} src={user.avatarUrl} name={user.displayName} size={88} />
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-extrabold">{user.displayName}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="break-words text-xl font-extrabold sm:text-2xl">{user.displayName}</h1>
               <p className="mt-1 flex flex-wrap items-center gap-3 text-sm text-white/80">
                 {city && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" aria-hidden />{city.nameFa}</span>}
                 {profile?.preferredTime && <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" aria-hidden />{timesLabel(profile.preferredTime)}</span>}
               </p>
               <p className="mt-1 text-xs text-white/70">شمارهٔ شما (فقط برای خودتان): <bdi>{formatPhoneDisplay(user.phoneE164)}</bdi></p>
             </div>
-            <Link href="/profile/edit" className="btn btn-sm ms-auto bg-white/15 text-white hover:bg-white/25"><Pencil className="h-4 w-4" aria-hidden />ویرایش</Link>
+            <Link href="/profile/edit" aria-label="ویرایش پروفایل" className="btn btn-sm ms-auto shrink-0 bg-white/15 text-white hover:bg-white/25"><Pencil className="h-4 w-4" aria-hidden /><span className="hidden sm:inline">ویرایش</span></Link>
           </div>
         </div>
         {profile?.bio && <p className="border-b border-line p-5 text-ink-700">{profile.bio}</p>}
