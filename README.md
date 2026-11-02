@@ -15,7 +15,7 @@ Jalali dates, Persian digits, integer toman, and OTP-by-SMS login.
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-205%20unit%20%2B%20430%2B%20E2E%20checks-brightgreen)
+![Tests](https://img.shields.io/badge/tests-205%20unit%20%2B%20460%2B%20E2E%20checks-brightgreen)
 ![a11y](https://img.shields.io/badge/axe--core-0%20serious%20violations-brightgreen)
 ![Status](https://img.shields.io/badge/status-demo%20(simulated%20payments)-orange)
 
@@ -36,6 +36,7 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 ## Contents
 
 - [Screenshots](#screenshots)
+- [Install as an app](#install-as-an-app)
 - [Features](#features)
 - [How payment works](#how-payment-works)
 - [Architecture](#architecture)
@@ -94,6 +95,12 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 
 <p align="center"><img src="docs/screenshots/12-mobile.jpg" alt="Mobile layouts" width="100%"></p>
 
+## Install as an app
+
+Visitors who open HamBazi in a normal browser get a popup right away offering to install the web app — **one click** on Chromium (Android, desktop Chrome/Edge), or the three "Add to Home Screen" steps on iOS Safari. The popup has a **"don't show again"** checkbox; closing it any other way hides it for the rest of the session. A permanent **"Install the web app"** entry stays in the footer for every browser visitor, and nothing is shown once the app is installed or running standalone.
+
+<p align="center"><img src="docs/screenshots/13-install.jpg" alt="Install popup on desktop and mobile" width="100%"></p>
+
 ## Features
 
 **Players**
@@ -105,6 +112,7 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 - **Chat** for sessions and teams: replies, edit (48 h) and delete-for-everyone, read ticks, unread badges, 90-day retention.
 - **Trust system**: attendance marked by the venue, a *commitment score*, peer skill ratings blended into **OVR**, venue reviews (only from people who played), reports.
 - Favourites, notifications with preferences, device/session management, support desk.
+- **One-click install** of the web app (popup + footer entry).
 - **Map and navigation** on every venue; on Android the phone's own "open with" app chooser (Neshan, Balad, Google Maps, Waze…).
 
 **Venue owners & staff**
@@ -316,11 +324,12 @@ docs/             Design, architecture, deployment, phase handoffs
 | 7 | Replies, favourites, waiting list, support desk, venue staff | ✅ |
 | 8 | PWA, accessibility, messenger-style chat, map & navigation, polish | ✅ |
 | 9 | Hardening, Kavenegar SMS, SEO, health check, clean-up | ✅ |
-| 10 | Real payment gateway (sandbox → live) | ⏳ |
+| 10 | Install-the-app popup and footer entry, sample-data polish | ✅ |
+| 11 | Real payment gateway (sandbox → live) | ⏳ |
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/18-phase9-handoff.md`](docs/18-phase9-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/19-phase10-handoff.md`](docs/19-phase10-handoff.md).
 
 ## License
 

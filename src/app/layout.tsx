@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { DemoBanner } from '@/components/layout/DemoBanner';
 import { BottomNav } from '@/components/layout/NavLinks';
 import { ZoomLock } from '@/components/layout/ZoomLock';
+import { InstallManager } from '@/components/layout/InstallApp';
 import { PwaRegister } from '@/components/layout/PwaClient';
 import { currentUser } from '@/server/auth/session';
 
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-3">پرش به محتوای اصلی</a>
         <PwaRegister />
         <ZoomLock />
+        <InstallManager />
         <DemoBanner />
         <Header />
         <main id="main">{children}</main>

@@ -50,7 +50,7 @@ check('owner dashboard 200', r.status() === 200);
 const rev = await op.locator('[data-stat="درآمد سالن"]').innerText();
 check('revenue KPI shows venue payable (۳۵۰٬۰۰۰), not fee-inclusive total', /۳۵۰[,٬]۰۰۰/.test(rev) && !/۳۶۷/.test(rev), rev);
 check('chart is present with accessible label', await op.locator('[role=img][aria-label*="نمودار درآمد"]').count() === 1);
-check('recent reservations lists the game', (await op.locator('text=رضا کریمی').count()) >= 1);
+check('recent reservations lists the game', (await op.locator('text=رها کریمی').count()) >= 1);
 await op.selectOption('#f-days', '7'); await op.click('button:has-text("اعمال")'); await op.waitForURL('**days=7**');
 check('7-day filter applied (URL + 7 bars)', (await op.locator('[role=img][aria-label*="۷ روز"] > div').count()) === 7);
 await op.goto(BASE + '/owner', { waitUntil: 'networkidle' });

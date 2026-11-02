@@ -62,10 +62,9 @@ await p.goto(BASE + '/', { waitUntil: 'networkidle' });
 await a.ctx.setOffline(true);
 await p.waitForSelector('[role=status]:has-text("اتصال اینترنت قطع است")', { timeout: 5000 }).then(() => check('offline banner shows while disconnected', true)).catch(() => check('offline banner shows while disconnected', false));
 await a.ctx.setOffline(false);
-// install button: hidden in a normal desktop browser without a prompt event
-check('no install button without a prompt event', (await p.locator('footer button:has-text("نصب")').count()) === 0);
-await p.evaluate(() => window.dispatchEvent(Object.assign(new Event('beforeinstallprompt'), { prompt: async () => {}, userChoice: Promise.resolve({ outcome: 'dismissed' }) })));
-check('install button appears on beforeinstallprompt', (await p.locator('footer button:has-text("نصب")').count()) === 1);
+// install entry (phase 10): always in the footer for browser visitors; the popup only appears when the browser offers the install prompt (details in phase10.mjs)
+check('footer install entry is always visible in a browser', (await p.locator('footer button:has-text("نصب")').count()) === 1);
+check('no popup without a prompt event', (await p.getByRole('dialog').count()) === 0);
 
 // ---------- axe accessibility pass (serious + critical only). meta-viewport is disabled on purpose: zoom is off by product decision (phase 8c).
 const venueSlug = psql(`select slug from venues where status='published' order by created_at limit 1`);

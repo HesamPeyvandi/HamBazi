@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
-import { InstallButton } from '@/components/layout/PwaClient';
+import { InstallButton } from '@/components/layout/InstallApp';
 
 export function Footer() {
   return (
