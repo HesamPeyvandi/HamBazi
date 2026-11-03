@@ -270,12 +270,14 @@ npm test
 ## Deploy: GitHub → Neon → Vercel
 
 1. Push the repo to GitHub (private).
-2. Create a **Neon** project; run `npm run db:migrate` (and optionally `db:seed`) with the **direct** connection string.
+2. Create a **Neon** project (region Frankfurt, next to Vercel's `fra1`). Migrations and demo data are applied by the Vercel build (below); running `npm run db:migrate` / `db:seed` yourself with the **direct** connection string also works if your network can reach Neon.
 3. Import the repo in **Vercel**; set the environment variables above (`APP_ENV=demo` for a demo; **never** `simulated`/`mock` with `production`). Use the **pooled** `DATABASE_URL`.
 4. Create a **Vercel Blob** store and connect it to the project (adds `BLOB_READ_WRITE_TOKEN`).
 5. Set `APP_URL` to the deployed URL and redeploy.
 
-Every later `git push` redeploys automatically; run `npm run db:migrate` first when a release adds a migration. The full step-by-step guide (in Persian) is in [`docs/08-deployment-github-vercel-neon.md`](docs/08-deployment-github-vercel-neon.md).
+**Automatic database setup.** The project's `vercel-build` script (`scripts/vercel-build.mjs`) runs on Vercel's servers before `next build`: it applies pending migrations to the production database, and — only if you set `SEED_IF_EMPTY=1` with `APP_ENV=demo` — loads the demo data when the database is still empty (never on a database that has data). So you do not need to reach Neon from your own computer. It prefers `DATABASE_URL_UNPOOLED` (Neon's direct URL) when present. Preview deployments never touch the database.
+
+Every later `git push` redeploys automatically; new migrations are applied by the build itself. The full step-by-step guide (in Persian) is in [`docs/08-deployment-github-vercel-neon.md`](docs/08-deployment-github-vercel-neon.md).
 
 ## Run it on your own machine (no Vercel)
 

@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
-const url = process.env.DATABASE_URL;
+const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL; // Neon: prefer the direct (unpooled) URL for DDL
 if (!url) throw new Error('DATABASE_URL is not set');
 const sql = postgres(url, { max: 1 });
 await sql`CREATE EXTENSION IF NOT EXISTS btree_gist`;
