@@ -3,7 +3,7 @@ import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { cancelOpenIntents, notify, refundIntent, succeededIntents, type Tx } from './core';
 import { E } from './errors';
-import { acquireSlot, assertHoldCap, loadBookable, policies } from './hold';
+import { acquireSlot, assertHoldCap, findExistingHold, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { splitShare } from './money';
 import { lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
@@ -26,6 +26,11 @@ export async function settleStale(sessionId: string) { await db().transaction((t
 
 export async function createOpenSession(hostUserId: string, i: CreateSessionInput, now = new Date()) {
   return db().transaction(async (tx) => {
+    const again = await findExistingHold(tx, hostUserId, i.slotId, 'open_session', now); // double submit => same session, not an error
+    if (again) {
+      const [s0] = await tx.select().from(schema.openSessions).where(eq(schema.openSessions.reservationId, again.reservation.id));
+      if (s0) return { sessionId: s0.id, reservationId: again.reservation.id, intentId: again.intent.id, holdExpiresAt: again.reservation.holdExpiresAt!, inviteToken: s0.inviteToken, share: s0.pricePerParticipant };
+    }
     await assertHoldCap(tx, hostUserId, now);
     const { slot, venue, venueSport } = await loadBookable(tx, i.slotId);
     if (!venueSport) throw E.notFound();
@@ -66,6 +71,11 @@ export async function joinSession(userId: string, sessionId: string, opts: { inv
     const host = parts.find((p) => p.isHost);
     if (!host || host.status !== 'confirmed') throw E.badState();
     const mine = parts.find((p) => p.userId === userId);
+    if (mine && mine.status === 'pending_payment' && mine.holdExpiresAt && mine.holdExpiresAt > now) {
+      // double submit: the user already holds a seat and owes the payment => hand back the same open intent
+      const [open] = await tx.select().from(schema.paymentIntents).where(and(eq(schema.paymentIntents.participantId, mine.id), eq(schema.paymentIntents.status, 'created')));
+      if (open) return { intentId: open.id, holdExpiresAt: mine.holdExpiresAt, participantId: mine.id };
+    }
     if (mine && ['pending_payment', 'confirmed', 'attended'].includes(mine.status)) throw E.alreadyJoined();
     const taken = parts.filter((p) => p.status === 'confirmed' || (p.status === 'pending_payment' && p.holdExpiresAt && p.holdExpiresAt > now)).length;
     if (taken >= s.targetCount) throw E.full();

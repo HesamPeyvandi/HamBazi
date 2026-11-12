@@ -81,3 +81,29 @@ input, select, textarea { font-size: 16px; }
 
 /* map attribution links must not rely on colour alone (WCAG 1.4.1) */
 .leaflet-control-attribution a { text-decoration: underline; }
+
+/* ---- Logo splash (shown once per session; see components/layout/Splash.tsx) ---- */
+.hb-splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(160deg, var(--color-brand-600) 0%, var(--color-brand-900) 60%, var(--color-brand-950) 100%);
+  opacity: 1; visibility: visible;
+  /* fallback: hides itself even without JavaScript */
+  animation: hb-splash-fallback .45s ease 3.6s forwards; }
+.hb-splash.hb-splash-out { opacity: 0; visibility: hidden; pointer-events: none; animation: none; transition: opacity .45s ease, visibility 0s linear .45s; }
+.hb-splash-inner { display: flex; flex-direction: column; align-items: center; gap: 1rem; animation: hb-splash-pop .7s cubic-bezier(.2,.8,.2,1) both; }
+.hb-splash-tag { font-size: .95rem; color: rgb(255 255 255 / .75); }
+.hb-splash-bar { width: 7rem; height: 3px; border-radius: 3px; background: rgb(255 255 255 / .18); position: relative; overflow: hidden; }
+.hb-splash-bar::after { content: ''; position: absolute; inset-block: 0; inset-inline-start: 0; width: 40%; border-radius: 3px; background: var(--color-accent); animation: hb-splash-slide 1.1s ease-in-out infinite; }
+@keyframes hb-splash-pop { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes hb-splash-slide { 0% { transform: translateX(0); } 100% { transform: translateX(-250%); } }
+@keyframes hb-splash-fallback { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hb-splash-inner, .hb-splash-bar::after { animation: none; }
+  .hb-splash.hb-splash-out { transition: none; }
+}
+
+/* ---- Skeleton shimmer ---- */
+.skel { position: relative; overflow: hidden; background: #e6efec; border-radius: 10px; }
+.skel::after { content: ''; position: absolute; inset: 0; transform: translateX(100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / .65), transparent); animation: hb-shimmer 1.4s infinite; }
+@keyframes hb-shimmer { 100% { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/server/auth/rbac';
 import { createReportAction } from '@/server/trust/actions';
 import { REPORT_REASONS } from '@/server/trust/reports';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'گزارش تخلف' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -20,6 +21,6 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
       <form action={createReportAction.bind(null, q.type, q.id)} className="card mt-5 space-y-4 p-6">
         <div><label className="label" htmlFor="reason">دلیل</label><select id="reason" name="reason" className="field" required>{Object.entries(REPORT_REASONS).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
         <div><label className="label" htmlFor="details">توضیحات</label><textarea id="details" name="details" rows={5} maxLength={1000} className="field" /></div>
-        <button className="btn btn-primary w-full">ثبت گزارش</button></form></div>
+        <SubmitButton className="btn btn-primary w-full">ثبت گزارش</SubmitButton></form></div>
   );
 }

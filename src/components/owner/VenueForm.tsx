@@ -1,5 +1,6 @@
 import { FACILITIES } from '@/lib/facilities';
 import { LocationPicker } from '@/components/owner/LocationPicker';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 interface Props {
   action: (fd: FormData) => void | Promise<void>;
@@ -35,7 +36,7 @@ export function VenueForm({ action, cities, sports, defaults: d, submitLabel }: 
               <div><label className="label" htmlFor={`minutes_${s.id}`}>مدت سانس (دقیقه)</label><input id={`minutes_${s.id}`} name={`minutes_${s.id}`} inputMode="numeric" defaultValue={cur?.slotMinutes ?? 90} className="field" /></div>
               <div><label className="label" htmlFor={`cap_${s.id}`}>ظرفیت سالن (نفر)</label><input id={`cap_${s.id}`} name={`cap_${s.id}`} inputMode="numeric" defaultValue={cur?.maxCapacity ?? s.defaultCapacity} className="field" /></div>
             </div></div>); })}</div></fieldset>
-      <button className="btn btn-primary w-full sm:w-auto">{submitLabel}</button>
+      <SubmitButton className="btn btn-primary w-full sm:w-auto">{submitLabel}</SubmitButton>
     </form>
   );
 }

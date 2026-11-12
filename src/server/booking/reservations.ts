@@ -3,7 +3,7 @@ import { db, schema } from '@/db/client';
 import { audit } from '@/server/audit';
 import { cancelOpenIntents, notify, notifyManagers, refundIntent, releaseSlot, succeededIntents, type Reservation, type Tx } from './core';
 import { E } from './errors';
-import { acquireSlot, assertHoldCap, loadBookable, policies } from './hold';
+import { acquireSlot, assertHoldCap, findExistingHold, loadBookable, policies } from './hold';
 import { createIntent } from './intents';
 import { cancelSessionInternal, lockSlot, lockSession, playerRefundPercent, processSession, sweepDue } from './lifecycle';
 import { calcFee } from './money';
@@ -14,6 +14,8 @@ const bump = sql`${schema.reservations.version} + 1`;
 /** Full-venue reservation with a server-enforced hold + the payment intent the host must complete. */
 export async function createFullReservation(hostUserId: string, slotId: string) {
   return db().transaction(async (tx) => {
+    const again = await findExistingHold(tx, hostUserId, slotId, 'full'); // double submit => same reservation, not an error
+    if (again) return { reservationId: again.reservation.id, intentId: again.intent.id, holdExpiresAt: again.reservation.holdExpiresAt! };
     await assertHoldCap(tx, hostUserId);
     const { slot, venue, venueSport } = await loadBookable(tx, slotId);
     if (!venueSport) throw E.notFound();

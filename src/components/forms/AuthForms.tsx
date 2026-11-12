@@ -1,4 +1,5 @@
 'use client';
+import { Spinner } from '@/components/ui/SubmitButton';
 import { useActionState } from 'react';
 import { ArrowLeft, Smartphone, User, Gift, ShieldCheck, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
@@ -22,7 +23,7 @@ export function LoginForm({ next }: { next: string }) {
         </div>
         <p id="phone-help" className="help">کد ورود به این شماره پیامک می‌شود.</p>
       </div>
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending ? 'در حال ارسال…' : 'دریافت کد ورود'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending && <Spinner />}{pending ? 'در حال ارسال…' : 'دریافت کد ورود'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
       <p className="text-center text-sm text-ink-500">حساب کاربری ندارید؟ <Link href="/register" className="font-bold text-brand-600">ثبت‌نام کنید</Link></p>
     </form>
   );
@@ -55,7 +56,7 @@ export function RegisterForm() {
           <span>با <Link href="/terms" className="font-bold text-brand-600" target="_blank">قوانین و مقررات</Link> و <Link href="/privacy" className="font-bold text-brand-600" target="_blank">حریم خصوصی</Link> موافقم.</span></label>
         <Err s={s} k="terms" />
       </div>
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending ? 'در حال ارسال…' : 'ثبت‌نام و دریافت کد'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending && <Spinner />}{pending ? 'در حال ارسال…' : 'ثبت‌نام و دریافت کد'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
       <p className="flex items-center justify-center gap-2 rounded-xl bg-page p-3 text-xs text-ink-500"><ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden />اطلاعات شما امن و محرمانه خواهد ماند.</p>
       <p className="text-center text-sm text-ink-500">قبلاً ثبت‌نام کرده‌اید؟ <Link href="/login" className="font-bold text-brand-600">وارد شوید</Link></p>
     </form>
@@ -75,7 +76,7 @@ export function VerifyForm({ next }: { next: string }) {
           <input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} dir="ltr" required autoFocus
             className="field text-center text-2xl font-bold tracking-[0.5em]" placeholder="••••••" />
         </div>
-        <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending ? 'در حال بررسی…' : 'تأیید و ورود'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
+        <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending && <Spinner />}{pending ? 'در حال بررسی…' : 'تأیید و ورود'}<ArrowLeft className="h-4 w-4" aria-hidden /></button>
       </form>
       <form action={resend} className="text-center">
         {r.error && <p className="mb-2 text-sm text-danger-fg" role="alert">{r.error}</p>}

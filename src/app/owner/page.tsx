@@ -7,6 +7,7 @@ import { RevenueChart } from '@/components/owner/RevenueChart';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { EmptyState } from '@/components/ui/misc';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'پنل مالک سالن' };
 const ST: Record<string, [string, string]> = { draft: ['پیش‌نویس', 'pill-warn'], pending: ['در انتظار تأیید', 'pill-info'], published: ['منتشرشده', 'pill-green'], suspended: ['تعلیق', 'pill-danger'] };
@@ -19,7 +20,7 @@ export default async function OwnerHome({ searchParams }: { searchParams: Promis
   const u = await requireUser('/owner');
   if (u.role === 'player') return (
     <div className="container-page max-w-xl py-10"><EmptyState title="سالن ورزشی دارید؟" text="با فعال‌سازی پنل مالک می‌توانید سالن خود را ثبت کنید و سانس‌ها را مدیریت کنید."
-      action={<form action={becomeManagerAction}><button className="btn btn-primary">فعال‌سازی پنل مالک</button></form>} /></div>);
+      action={<form action={becomeManagerAction}><SubmitButton className="btn btn-primary">فعال‌سازی پنل مالک</SubmitButton></form>} /></div>);
   const venues = await listOwnerVenues(u);
   const days = RANGES.includes(Number(q.days)) ? Number(q.days) : 30;
   const venueId = venues.find((v) => v.id === q.venue)?.id ?? null;

@@ -7,6 +7,7 @@ import { Avatar } from '@/components/ui/misc';
 import { ScoreSlider } from '@/components/booking/ScoreSlider';
 import { formatJalaliWithWeekday } from '@/lib/i18n/jalali';
 import { toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'امتیازدهی بعد از بازی' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -41,7 +42,7 @@ export default async function RatePage({ params, searchParams }: { params: Promi
                     <ScoreSlider key={c.key} id={`s_${p.userId}_${c.key}`} name={`s_${p.userId}_${c.key}`} label={c.nameFa} />))}</div>
                   <label className="label mt-3" htmlFor={`comment_${p.userId}`}>نظر (اختیاری)</label><textarea id={`comment_${p.userId}`} name={`comment_${p.userId}`} maxLength={300} rows={2} className="field" />
                 </fieldset>))}
-              <button className="btn btn-primary w-full">ثبت امتیازها</button></form>)}
+              <SubmitButton className="btn btn-primary w-full">ثبت امتیازها</SubmitButton></form>)}
         </section>)}
 
       {!ctx.expired && (
@@ -51,7 +52,7 @@ export default async function RatePage({ params, searchParams }: { params: Promi
               <fieldset><legend className="label">امتیاز سالن</legend>
                 <div className="flex gap-2">{[1, 2, 3, 4, 5].map((n) => <label key={n} className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-xl border border-line px-3 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50"><input type="radio" name="rating" value={n} required className="sr-only" />{toFa(n)} ★</label>)}</div></fieldset>
               <div><label className="label" htmlFor="comment">نظر شما</label><textarea id="comment" name="comment" rows={3} maxLength={600} className="field" /></div>
-              <button className="btn btn-primary w-full">ثبت نظر</button></form>)}
+              <SubmitButton className="btn btn-primary w-full">ثبت نظر</SubmitButton></form>)}
         </section>)}
       <p className="mt-6 text-sm"><Link href="/reservations" className="font-bold text-brand-600">بازگشت به رزروهای من</Link> · <Link href={`/report?type=venue&id=${ctx.game.venue.id}`} className="text-ink-500">گزارش مشکل سالن</Link></p>
     </div>

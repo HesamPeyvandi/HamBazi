@@ -6,6 +6,7 @@ import { AdminNav } from '@/components/layout/AdminNav';
 import { reviewVenueAction } from '@/server/owner/actions';
 import { EmptyState } from '@/components/ui/misc';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'تأیید سالن‌ها' };
 
@@ -23,13 +24,13 @@ export default async function AdminVenues({ searchParams }: { searchParams: Prom
           <li key={v.id} className="card p-5"><p className="text-lg font-extrabold">{v.name}</p><p className="text-sm text-ink-500">{v.address} · مالک: {owner || 'کاربر'} (<bdi>{formatPhoneDisplay(phone)}</bdi>)</p>
             <p className="mt-2 text-sm leading-7">{v.description}</p>
             <form className="mt-3 flex flex-wrap items-end gap-2"><div className="min-w-48 flex-1"><label className="label" htmlFor={`n-${v.id}`}>توضیح (برای رد کردن)</label><input id={`n-${v.id}`} name="note" className="field" /></div>
-              <button formAction={reviewVenueAction.bind(null, v.id, 'approve')} className="btn btn-primary">تأیید و انتشار</button>
-              <button formAction={reviewVenueAction.bind(null, v.id, 'reject')} className="btn btn-danger">رد / نیاز به اصلاح</button></form></li>))}</ul>)}</div>
+              <SubmitButton formAction={reviewVenueAction.bind(null, v.id, 'approve')} className="btn btn-primary">تأیید و انتشار</SubmitButton>
+              <SubmitButton formAction={reviewVenueAction.bind(null, v.id, 'reject')} className="btn btn-danger">رد / نیاز به اصلاح</SubmitButton></form></li>))}</ul>)}</div>
       <h2 className="section-title mb-3 mt-8">منتشرشده و تعلیق‌شده</h2>
       <ul className="space-y-2">{live.map((v) => (
         <li key={v.id} className="card flex flex-wrap items-center justify-between gap-2 p-4"><span className="font-bold">{v.name} {v.status === 'suspended' && <span className="pill pill-danger ms-1">تعلیق</span>}</span>
           <form className="flex items-center gap-2"><label className="sr-only" htmlFor={`sn-${v.id}`}>توضیح</label><input id={`sn-${v.id}`} name="note" placeholder="توضیح (اختیاری)" className="field !w-44" />
-            {v.status === 'published' ? <button formAction={setVenueSuspendedAction.bind(null, v.id, true)} className="btn btn-danger btn-sm">تعلیق سالن</button> : <button formAction={setVenueSuspendedAction.bind(null, v.id, false)} className="btn btn-primary btn-sm">بازگردانی</button>}</form></li>))}</ul>
+            {v.status === 'published' ? <SubmitButton formAction={setVenueSuspendedAction.bind(null, v.id, true)} className="btn btn-danger btn-sm">تعلیق سالن</SubmitButton> : <SubmitButton formAction={setVenueSuspendedAction.bind(null, v.id, false)} className="btn btn-primary btn-sm">بازگردانی</SubmitButton>}</form></li>))}</ul>
     </div>
   );
 }

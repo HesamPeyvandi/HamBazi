@@ -8,7 +8,9 @@ import { BottomNav } from '@/components/layout/NavLinks';
 import { ZoomLock } from '@/components/layout/ZoomLock';
 import { InstallManager } from '@/components/layout/InstallApp';
 import { PwaRegister } from '@/components/layout/PwaClient';
+import { Splash } from '@/components/layout/Splash';
 import { currentUser } from '@/server/auth/session';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? 'http://localhost:3000'),
@@ -23,9 +25,11 @@ export const viewport: Viewport = { themeColor: '#03352f', width: 'device-width'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
+  const showSplash = !(await cookies()).has('hb_splash'); // once per browser session
   return (
     <html lang="fa" dir="rtl">
       <body>
+        {showSplash && <Splash />}
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-3">پرش به محتوای اصلی</a>
         <PwaRegister />
         <ZoomLock />

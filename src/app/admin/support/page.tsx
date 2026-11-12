@@ -4,6 +4,7 @@ import { closeSupportAction } from '@/server/support/actions';
 import { AdminNav } from '@/components/layout/AdminNav';
 import { EmptyState } from '@/components/ui/misc';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'پیام‌های پشتیبانی' };
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export default async function AdminSupport({ searchParams }: { searchParams: Pro
         <ul className="space-y-3">{rows.map(({ m, name }) => (
           <li key={m.id} className="card p-4"><p className="font-bold">{TOPICS[m.topic] ?? m.topic} <span className="text-sm font-normal text-ink-500">· {name || 'کاربر'} · {formatJalaliDateTime(m.createdAt)}</span></p>
             <p dir="auto" className="mt-2 whitespace-pre-wrap text-sm leading-7">{m.body}</p>
-            <form action={closeSupportAction.bind(null, m.id)} className="mt-3"><button className="btn btn-outline btn-sm">بستن پیام</button></form></li>))}</ul>)}
+            <form action={closeSupportAction.bind(null, m.id)} className="mt-3"><SubmitButton className="btn btn-outline btn-sm">بستن پیام</SubmitButton></form></li>))}</ul>)}
     </div>
   );
 }

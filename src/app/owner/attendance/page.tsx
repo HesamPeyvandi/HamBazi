@@ -4,6 +4,7 @@ import { listAttendanceTasks } from '@/server/trust/attendance';
 import { markAttendanceAction } from '@/server/trust/actions';
 import { EmptyState } from '@/components/ui/misc';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'حضور و غیاب' };
 const ST: Record<string, [string, string]> = { confirmed: ['ثبت نشده', 'pill-warn'], attended: ['حاضر', 'pill-green'], no_show: ['غایب', 'pill-danger'] };
@@ -22,7 +23,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
           <li key={t.r.id} className="card p-5"><p className="font-bold">{t.venueName} — {t.sportName}</p><p className="text-sm text-ink-500">{formatJalaliDateTime(t.startsAt)} · {t.r.mode === 'full' ? 'رزرو کامل' : 'سانس باز'}</p>
             <ul className="mt-3 divide-y divide-line">{t.players.map((p) => { const s = ST[p.status] ?? ST.confirmed; return (
               <li key={p.userId} className="flex flex-wrap items-center gap-2 py-2 text-sm"><span className="min-w-0 flex-1 font-semibold">{p.name || 'کاربر'}</span><span className={`pill ${s[1]}`}>{s[0]}</span>
-                <form action={markAttendanceAction.bind(null, t.r.id, p.userId, 'attended')}><button className="btn btn-outline btn-sm" disabled={p.status === 'attended'}>حاضر</button></form>
-                <form action={markAttendanceAction.bind(null, t.r.id, p.userId, 'no_show')}><button className="btn btn-danger btn-sm" disabled={p.status === 'no_show'}>غایب</button></form></li>); })}</ul></li>))}</ul>)}</div></div>
+                <form action={markAttendanceAction.bind(null, t.r.id, p.userId, 'attended')}><SubmitButton className="btn btn-outline btn-sm" disabled={p.status === 'attended'}>حاضر</SubmitButton></form>
+                <form action={markAttendanceAction.bind(null, t.r.id, p.userId, 'no_show')}><SubmitButton className="btn btn-danger btn-sm" disabled={p.status === 'no_show'}>غایب</SubmitButton></form></li>); })}</ul></li>))}</ul>)}</div></div>
   );
 }

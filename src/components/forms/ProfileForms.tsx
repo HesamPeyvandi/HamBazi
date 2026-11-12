@@ -1,4 +1,5 @@
 'use client';
+import { Spinner } from '@/components/ui/SubmitButton';
 import { useActionState, useState } from 'react';
 import { onboardingAction, editProfileAction, type FormState } from '@/server/auth/actions';
 import { toFa } from '@/lib/i18n/digits';
@@ -57,7 +58,7 @@ export function OnboardingForm({ sports, cities, defaults, next }: {
           <div className="space-y-3">{sp.skills.map((k) => <Slider key={k.key} name={`skill_${sp.key}_${k.key}`} label={k.nameFa} defaultValue={Math.round((defaults.scores[sp.key]?.[k.key] ?? 50) / 10)} />)}</div>
         </fieldset>
       ))}
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending ? 'در حال ذخیره…' : 'ذخیره و ادامه'}</button>
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">{pending && <Spinner />}{pending ? 'در حال ذخیره…' : 'ذخیره و ادامه'}</button>
     </form>
   );
 }
@@ -79,7 +80,7 @@ export function EditProfileForm({ defaults, sports }: { defaults: { name: string
         <label className="flex min-h-10 items-center gap-2"><input type="checkbox" name="showProfile" defaultChecked={defaults.showProfile} className="checkbox" />نمایش پروفایل من به سایر کاربران</label>
         <label className="flex min-h-10 items-center gap-2"><input type="checkbox" name="showHistory" defaultChecked={defaults.showHistory} className="checkbox" />نمایش سابقهٔ بازی‌ها</label>
         <p className="help">شمارهٔ موبایل شما هرگز به دیگران نمایش داده نمی‌شود.</p></fieldset>
-      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">{pending ? 'در حال ذخیره…' : 'ذخیره تغییرات'}</button>
+      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">{pending && <Spinner />}{pending ? 'در حال ذخیره…' : 'ذخیره تغییرات'}</button>
     </form>
   );
 }

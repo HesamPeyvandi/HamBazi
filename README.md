@@ -15,7 +15,7 @@ Jalali dates, Persian digits, integer toman, and OTP-by-SMS login.
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-205%20unit%20%2B%20460%2B%20E2E%20checks-brightgreen)
+![Tests](https://img.shields.io/badge/tests-211%20unit%20%2B%20498%2B%20E2E%20checks-brightgreen)
 ![a11y](https://img.shields.io/badge/axe--core-0%20serious%20violations-brightgreen)
 ![Status](https://img.shields.io/badge/status-demo%20(simulated%20payments)-orange)
 
@@ -36,6 +36,7 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 ## Contents
 
 - [Screenshots](#screenshots)
+- [Splash, instant feedback and skeletons](#splash-instant-feedback-and-loading-skeletons)
 - [Install as an app](#install-as-an-app)
 - [Features](#features)
 - [How payment works](#how-payment-works)
@@ -100,6 +101,14 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 Visitors who open HamBazi in a normal browser get a popup right away offering to install the web app — **one click** on Chromium (Android, desktop Chrome/Edge), or the three "Add to Home Screen" steps on iOS Safari. The popup has a **"don't show again"** checkbox; closing it any other way hides it for the rest of the session. A permanent **"Install the web app"** entry stays in the footer for every browser visitor, and nothing is shown once the app is installed or running standalone.
 
 <p align="center"><img src="docs/screenshots/13-install.jpg" alt="Install popup on desktop and mobile" width="100%"></p>
+
+## Splash, instant feedback and loading skeletons
+
+- **Logo splash** — shown once per browser session (session cookie `hb_splash`) as a server-rendered overlay, so it covers the very first paint; it fades out after about a second. A pure-CSS fallback hides it even if JavaScript fails, and `prefers-reduced-motion` is respected.
+- **No double submits** — every server-action button is a `SubmitButton`: after one press it is disabled, marked `aria-busy` and shows a spinning circle next to its text. The form is locked synchronously on the first `submit`, so a second tap or Enter can never start a second request. The server is idempotent as well: repeating "create session / reserve" returns the same hold and payment instead of "slot no longer bookable".
+- **Loading skeletons** — shimmering placeholders (`src/components/ui/Skeleton.tsx`) for the public lists (venues, open sessions, teams; streamed with `Suspense` so the heading and filters appear instantly) and for private pages (`loading.tsx`: profile, favourites, notifications, dashboard). Public detail pages and role-gated areas keep **real 404 / 307 status codes**; guests of private areas are redirected by `src/proxy.ts` before anything renders.
+
+<p align="center"><img src="docs/screenshots/14-splash-skeleton.jpg" alt="Splash screen on desktop and mobile, and a skeleton while the list loads" width="100%"></p>
 
 ## Features
 
@@ -258,7 +267,7 @@ Copy `.env.example` to `.env`. Secrets must be ≥ 32 characters (`openssl rand 
 
 ## Testing
 
-- **Vitest — 205 tests** on a real PostgreSQL: concurrent booking and joins, double-booking guard, idempotent payments and refunds, OTP rules, RBAC/IDOR, trust scoring, split-share math, policy versioning, teams, chat membership/edit/delete, geo helpers, play-time parsing, SMS adapter (with a mocked `fetch`), environment safety.
+- **Vitest — 211 tests** on a real PostgreSQL: concurrent booking and joins, double-booking guard, idempotent payments and refunds, double-submit idempotency (same hold/intent returned on a repeated request), OTP rules, RBAC/IDOR, trust scoring, split-share math, policy versioning, teams, chat membership/edit/delete, geo helpers, play-time parsing, SMS adapter (with a mocked `fetch`), environment safety.
 - **Playwright E2E** drives the production build through real journeys (login → book → pay → session → attendance → rating → teams → chat → admin) plus RTL overflow, Persian-digit, alignment, PWA, SEO and axe checks on mobile and desktop.
 
 ```bash
@@ -295,7 +304,8 @@ npx next start -H 0.0.0.0 -p 3000
 ```
 src/
   app/            Next.js routes (player, owner, admin, teams, chat, API, robots, sitemap)
-  components/     UI components (booking, chat, owner, layout, forms, venues)
+  proxy.ts        guest redirect (real HTTP 307) for private areas
+  components/     UI components (booking, chat, owner, layout, forms, venues, ui: SubmitButton, Skeleton)
   db/             Drizzle schema, migrations runner, seed
   lib/            i18n (digits, Jalali, phone), labels, geo, play times
   server/
@@ -327,11 +337,13 @@ docs/             Design, architecture, deployment, phase handoffs
 | 8 | PWA, accessibility, messenger-style chat, map & navigation, polish | ✅ |
 | 9 | Hardening, Kavenegar SMS, SEO, health check, clean-up | ✅ |
 | 10 | Install-the-app popup and footer entry, sample-data polish | ✅ |
-| 11 | Real payment gateway (sandbox → live) | ⏳ |
+| 11 | Logo splash, spinner + double-submit protection, loading skeletons (performance step 1) | ✅ |
+| 12 | Performance: image optimisation (WebP/AVIF) and further steps | ⏳ |
+| 13 | Real payment gateway — on hold; payments stay simulated | ⏸ |
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/19-phase10-handoff.md`](docs/19-phase10-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/20-phase11-handoff.md`](docs/20-phase11-handoff.md).
 
 ## License
 

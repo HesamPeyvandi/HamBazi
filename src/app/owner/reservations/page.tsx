@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/misc';
 import { formatToman } from '@/lib/i18n/digits';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { RES_STATUS } from '@/lib/labels';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'رزروهای سالن' };
 
@@ -21,7 +22,7 @@ export default async function OwnerReservations({ searchParams }: { searchParams
           <li key={x.r.id} className="card flex flex-wrap items-center gap-3 p-4 text-sm">
             <div className="min-w-0 flex-1"><p className="font-bold">{x.venueName} — {x.sportName}</p><p className="text-ink-500">{formatJalaliDateTime(x.startsAt)} · میزبان: {x.hostName || 'کاربر'} · {x.r.mode === 'full' ? 'رزرو کامل' : 'سانس باز'} · {formatToman(x.r.venuePayable)}</p></div>
             <span className={`pill ${RES_STATUS[x.r.status].cls}`}>{RES_STATUS[x.r.status].label}</span>
-            {['awaiting_payment', 'confirmed'].includes(x.r.status) && <form action={ownerCancelReservationAction.bind(null, x.r.id)}><button className="btn btn-danger btn-sm">لغو توسط سالن</button></form>}
+            {['awaiting_payment', 'confirmed'].includes(x.r.status) && <form action={ownerCancelReservationAction.bind(null, x.r.id)}><SubmitButton className="btn btn-danger btn-sm">لغو توسط سالن</SubmitButton></form>}
           </li>))}</ul>)}</div></div>
   );
 }

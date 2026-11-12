@@ -6,6 +6,8 @@ import { EmptyState } from '@/components/ui/misc';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { formatJalaliWithWeekday, formatTime, formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { SESSION_STATUS } from '@/lib/labels';
+import { Suspense } from 'react';
+import { SkeletonGrid } from '@/components/ui/Skeleton';
 
 export const metadata = { title: 'سانس‌های باز' };
 
@@ -13,7 +15,6 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const sports = await getSportsList();
   const sportId = sports.find((s) => s.key === sp.sport)?.id;
-  const items = await listOpenSessions({ sportId, q: sp.q?.slice(0, 60) });
   return (
     <div className="container-page py-8">
       <h1 className="text-3xl font-extrabold">سانس‌های باز</h1>
@@ -23,7 +24,15 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
         <input name="q" defaultValue={sp.q ?? ''} placeholder="نام سالن" aria-label="نام سالن" className="field !w-auto" />
         <button className="btn btn-primary">فیلتر</button>
       </form>
-      <div className="mt-6">{items.length === 0 ? <EmptyState title="سانس بازی پیدا نشد" text="می‌توانید خودتان یک سانس باز بسازید." action={<Link href="/venues" className="btn btn-primary">انتخاب سالن</Link>} /> : (
+      <div className="mt-6"><Suspense fallback={<div role="status" aria-busy="true" data-testid="skeleton"><span className="sr-only">در حال بارگذاری سانس‌ها…</span><SkeletonGrid count={6} image={false} /></div>}><SessionResults sportId={sportId} q={sp.q?.slice(0, 60)} /></Suspense></div>
+    </div>
+  );
+}
+
+async function SessionResults({ sportId, q }: { sportId?: string; q?: string }) {
+  const items = await listOpenSessions({ sportId, q });
+  return (
+      <div>{items.length === 0 ? <EmptyState title="سانس بازی پیدا نشد" text="می‌توانید خودتان یک سانس باز بسازید." action={<Link href="/venues" className="btn btn-primary">انتخاب سالن</Link>} /> : (
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((x) => {
           const pct = Math.min(100, Math.round((x.confirmed / x.s.targetCount) * 100));
           return (
@@ -36,6 +45,5 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
               <p className="help mt-3">سهم هر نفر ثابت است · مهلت پیوستن: {formatJalaliDateTime(x.s.joinDeadline)}</p>
             </Link></li>);
         })}</ul>)}</div>
-    </div>
   );
 }

@@ -5,6 +5,7 @@ import { setReviewHiddenAction } from '@/server/admin/actions';
 import { AdminNav } from '@/components/layout/AdminNav';
 import { EmptyState, Pagination, Stars } from '@/components/ui/misc';
 import { formatJalaliShort } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'نظارت بر نظرات' };
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,7 @@ export default async function AdminReviews({ searchParams }: { searchParams: Pro
             {r.comment && <p dir="auto" className="mt-2 whitespace-pre-wrap text-sm leading-7">{r.comment}</p>}
             <form action={setReviewHiddenAction.bind(null, r.id, !hidden)} className="mt-3 flex flex-wrap items-end gap-2">
               <div className="min-w-48 flex-1"><label className="label" htmlFor={`n-${r.id}`}>توضیح (برای لاگ)</label><input id={`n-${r.id}`} name="note" className="field" maxLength={300} /></div>
-              <button className={`btn btn-sm ${hidden ? 'btn-outline' : 'btn-danger'}`}>{hidden ? 'بازگردانی نظر' : 'پنهان‌کردن نظر'}</button></form></li>))}</ul>)}
+              <SubmitButton className={`btn btn-sm ${hidden ? 'btn-outline' : 'btn-danger'}`}>{hidden ? 'بازگردانی نظر' : 'پنهان‌کردن نظر'}</SubmitButton></form></li>))}</ul>)}
       <div className="mt-4"><Pagination page={data.page} total={data.total} pageSize={15} hrefFor={href} /></div>
     </div>
   );

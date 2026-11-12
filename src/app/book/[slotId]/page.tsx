@@ -10,6 +10,7 @@ import { reserveFullAction } from '@/server/booking/actions';
 import { SessionForm } from '@/components/booking/SessionForm';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { formatJalaliWithWeekday, formatTime } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'رزرو سانس' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -57,7 +58,7 @@ export default async function BookPage({ params, searchParams }: { params: Promi
               <dl className="mt-4 space-y-2 text-sm"><div className="flex justify-between"><dt>هزینهٔ سانس</dt><dd>{formatToman(slot.price)}</dd></div>
                 <div className="flex justify-between"><dt>کارمزد خدمات</dt><dd>{formatToman(feeAmt)}</dd></div>
                 <div className="flex justify-between border-t border-line pt-2 text-base font-extrabold"><dt>مبلغ قابل پرداخت</dt><dd>{formatToman(slot.price + feeAmt)}</dd></div></dl>
-              <form action={reserveFullAction.bind(null, slot.id)} className="mt-5"><button className="btn btn-primary w-full">رزرو و ادامه به پرداخت</button></form>
+              <form action={reserveFullAction.bind(null, slot.id)} className="mt-5"><SubmitButton className="btn btn-primary w-full">رزرو و ادامه به پرداخت</SubmitButton></form>
             </section>
           ) : (
             <section className="card mt-5 p-6" aria-labelledby="open-t" id="open">

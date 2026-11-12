@@ -9,6 +9,7 @@ import { ChatRoom } from '@/components/chat/ChatRoom';
 import { ChatShell } from '@/components/chat/ChatShell';
 import { formatJalaliWithWeekday, formatTime } from '@/lib/i18n/jalali';
 import { toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'گفت‌وگو' };
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export default async function ChatRoomPage({ params, searchParams }: { params: P
       <header className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <div><h1 className="text-xl font-extrabold">{access.title}</h1>
           <p className="text-sm text-ink-500">{toFa(access.memberCount)} عضو{when ? ` · ${formatJalaliWithWeekday(when)}، ${formatTime(when)}` : ''} · <Link className="text-brand-600" href={access.href}>{access.kind === 'session' ? 'صفحهٔ سانس' : 'صفحهٔ تیم'}</Link></p></div>
-        <form action={muteAction.bind(null, roomId, !muted)}><button className="btn btn-ghost btn-sm">{muted ? <><Bell className="h-4 w-4" aria-hidden />روشن‌کردن اعلان</> : <><BellOff className="h-4 w-4" aria-hidden />خاموش‌کردن اعلان</>}</button></form>
+        <form action={muteAction.bind(null, roomId, !muted)}><SubmitButton className="btn btn-ghost btn-sm">{muted ? <><Bell className="h-4 w-4" aria-hidden />روشن‌کردن اعلان</> : <><BellOff className="h-4 w-4" aria-hidden />خاموش‌کردن اعلان</>}</SubmitButton></form>
       </header>
       {q.ok && OK[q.ok] && <p role="status" className="mb-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">{OK[q.ok]}</p>}
       {q.err && <p role="alert" className="mb-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
@@ -39,7 +40,7 @@ export default async function ChatRoomPage({ params, searchParams }: { params: P
       {blocked.length > 0 && (
         <section className="mt-3" aria-labelledby="blk"><h2 id="blk" className="mb-2 text-sm font-bold">کاربران مسدودشده در این گفت‌وگو</h2>
           <ul className="space-y-1 text-sm">{blocked.map((b) => <li key={b.userId} className="flex items-center justify-between"><span>{b.name || 'کاربر'}</span>
-            <form action={blockAction.bind(null, roomId, b.userId, false)}><button className="text-brand-600">رفع مسدودی</button></form></li>)}</ul></section>)}
+            <form action={blockAction.bind(null, roomId, b.userId, false)}><SubmitButton className="text-brand-600">رفع مسدودی</SubmitButton></form></li>)}</ul></section>)}
       </details>
       <ChatRoom key={q.n ?? 'init'} roomId={roomId} initial={data.messages} hasMoreInitial={data.hasMore} canWrite={access.canWrite} peerReadInitial={data.peerRead} updCursorInitial={new Date().getTime()} />
     </ChatShell>

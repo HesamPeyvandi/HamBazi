@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/misc';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { formatJalaliDateTime, formatJalaliWithWeekday, formatTime } from '@/lib/i18n/jalali';
 import { PAY_STATUS, SESSION_STATUS } from '@/lib/labels';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const OK: Record<string, string> = { team_invited: 'دعوت برای اعضای تیم ارسال شد.', paid: 'پرداخت (شبیه‌سازی‌شده) انجام شد.', left: 'از سانس خارج شدید.', left_refund: 'از سانس خارج شدید و بازگشت وجه (شبیه‌سازی‌شده) ثبت شد.', updated: 'تغییرات ذخیره شد.', waitlisted: 'به لیست انتظار اضافه شدید؛ با خالی شدن جا به شما اعلان می‌دهیم.', unwaitlisted: 'از لیست انتظار خارج شدید.' };
@@ -60,28 +61,28 @@ export default async function SessionPage({ params, searchParams }: { params: Pr
             {p.payment !== undefined && <span className="pill pill-info ms-auto">{PAY_STATUS[p.payment ?? 'created'] ?? '—'}</span>}</li>))}</ul>
       </section>
       <div className="mt-5 space-y-3">
-        {canJoin && (user ? <form action={joinSessionAction.bind(null, s.id, q.t)}><button className="btn btn-primary w-full">پیوستن و پرداخت سهم ({formatToman(s.pricePerParticipant)})</button></form>
+        {canJoin && (user ? <form action={joinSessionAction.bind(null, s.id, q.t)}><SubmitButton className="btn btn-primary w-full">پیوستن و پرداخت سهم ({formatToman(s.pricePerParticipant)})</SubmitButton></form>
           : <Link className="btn btn-primary w-full" href={`/login?next=${encodeURIComponent(`/sessions/${s.id}${q.t ? `?t=${q.t}` : ''}`)}`}>ورود برای پیوستن</Link>)}
         {d.myStatus === 'confirmed' && <Link className="btn btn-outline w-full" href={`/chat/session/${s.id}`}>گفت‌وگوی بازیکنان این سانس</Link>}
         {d.myStatus === 'pending_payment' && !d.isHost && <p className="rounded-xl bg-warn-bg p-3 text-sm text-warn-fg">پرداخت شما هنوز تکمیل نشده است. دوباره «پیوستن» را بزنید.</p>}
-        {d.myStatus === 'confirmed' && !d.isHost && active && <form action={leaveSessionAction.bind(null, s.id)}><button className="btn btn-ghost w-full">خروج از سانس (طبق سیاست لغو)</button></form>}
+        {d.myStatus === 'confirmed' && !d.isHost && active && <form action={leaveSessionAction.bind(null, s.id)}><SubmitButton className="btn btn-ghost w-full">خروج از سانس (طبق سیاست لغو)</SubmitButton></form>}
         {full && !d.isMember && active && (
           <div className="rounded-xl bg-page p-3 text-center text-ink-700">
             <p>ظرفیت این سانس تکمیل است{d.waitlist.count > 0 ? ` · ${toFa(d.waitlist.count)} نفر در لیست انتظار` : ''}.</p>
             {!user ? <Link className="btn btn-outline mt-2 w-full" href={`/login?next=${encodeURIComponent(`/sessions/${s.id}`)}`}>ورود برای لیست انتظار</Link>
-              : d.waitlist.position ? <form action={leaveWaitlistAction.bind(null, s.id)} className="mt-2"><p className="mb-2 text-sm font-bold text-brand-700">{d.waitlist.notified ? 'جا برای شما خالی شد؛ همین حالا بپیوندید!' : `نوبت شما: ${toFa(d.waitlist.position)}`}</p><button className="btn btn-ghost w-full">خروج از لیست انتظار</button></form>
-              : <form action={joinWaitlistAction.bind(null, s.id, q.t)} className="mt-2"><button className="btn btn-outline w-full">پیوستن به لیست انتظار</button></form>}
+              : d.waitlist.position ? <form action={leaveWaitlistAction.bind(null, s.id)} className="mt-2"><p className="mb-2 text-sm font-bold text-brand-700">{d.waitlist.notified ? 'جا برای شما خالی شد؛ همین حالا بپیوندید!' : `نوبت شما: ${toFa(d.waitlist.position)}`}</p><SubmitButton className="btn btn-ghost w-full">خروج از لیست انتظار</SubmitButton></form>
+              : <form action={joinWaitlistAction.bind(null, s.id, q.t)} className="mt-2"><SubmitButton className="btn btn-outline w-full">پیوستن به لیست انتظار</SubmitButton></form>}
           </div>)}
       </div>
       {d.isHost && (
         <section className="card mt-5 p-6" aria-labelledby="host-t"><h2 id="host-t" className="section-title mb-3">مدیریت سانس (میزبان)</h2>
-          {active && myTeams.length > 0 && <form action={inviteTeamToSessionAction.bind(null, s.id)} className="mb-4 flex flex-wrap items-end gap-2"><div className="min-w-48 flex-1"><label className="label" htmlFor="teamId">دعوت اعضای تیم من</label><select id="teamId" name="teamId" className="field">{myTeams.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div><button className="btn btn-outline">ارسال دعوت به تیم</button></form>}
+          {active && myTeams.length > 0 && <form action={inviteTeamToSessionAction.bind(null, s.id)} className="mb-4 flex flex-wrap items-end gap-2"><div className="min-w-48 flex-1"><label className="label" htmlFor="teamId">دعوت اعضای تیم من</label><select id="teamId" name="teamId" className="field">{myTeams.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div><SubmitButton className="btn btn-outline">ارسال دعوت به تیم</SubmitButton></form>}
           {invite && <div className="mb-4"><p className="label flex items-center gap-1"><Share2 className="h-4 w-4" aria-hidden />لینک دعوت</p><input readOnly value={invite} dir="ltr" className="field text-sm" aria-label="لینک دعوت" /></div>}
           {active && <form action={updateSessionAction.bind(null, s.id)} className="space-y-3">
             <div><label className="label" htmlFor="description">توضیحات</label><textarea id="description" name="description" rows={3} maxLength={500} defaultValue={s.description} className="field" /></div>
             <div><label className="label" htmlFor="visibility">نمایش</label><select id="visibility" name="visibility" defaultValue={s.visibility} className="field"><option value="public">عمومی</option><option value="invite_only">فقط با لینک</option></select></div>
-            <button className="btn btn-outline w-full">ذخیرهٔ تغییرات</button></form>}
-          {active && hostRes[0] && <form action={cancelReservationAction.bind(null, hostRes[0].id)} className="mt-4"><p className="help mb-2">با لغو سانس، سهم بقیهٔ بازیکنان کامل و سهم شما طبق سیاست لغو بازگردانده می‌شود (شبیه‌سازی‌شده).</p><button className="btn btn-danger w-full">لغو کل سانس</button></form>}
+            <SubmitButton className="btn btn-outline w-full">ذخیرهٔ تغییرات</SubmitButton></form>}
+          {active && hostRes[0] && <form action={cancelReservationAction.bind(null, hostRes[0].id)} className="mt-4"><p className="help mb-2">با لغو سانس، سهم بقیهٔ بازیکنان کامل و سهم شما طبق سیاست لغو بازگردانده می‌شود (شبیه‌سازی‌شده).</p><SubmitButton className="btn btn-danger w-full">لغو کل سانس</SubmitButton></form>}
         </section>)}
       <p className="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink-500"><ShieldCheck className="h-4 w-4" aria-hidden /><Link href="/cancellation-policy" className="font-bold text-brand-600">سیاست لغو و بازگشت وجه</Link><Link href={`/report?type=session&id=${s.id}`}>گزارش این سانس</Link></p>
     </div>

@@ -7,6 +7,7 @@ import { createSlotsAction, deleteSlotAction, toggleSlotAction } from '@/server/
 import { getSportsList } from '@/server/venues/queries';
 import { formatNumber, toFa } from '@/lib/i18n/digits';
 import { JALALI_MONTHS, JALALI_WEEKDAYS, formatJalaliWithWeekday, formatTime, tehranParts, toJalali } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'مدیریت سانس‌ها' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -39,7 +40,7 @@ export default async function SlotsPage({ params, searchParams }: { params: Prom
           <fieldset><legend className="label">روزها</legend><div className="flex flex-wrap gap-2">{days.map((x) => (
             <label key={x.key} className="flex min-h-10 items-center gap-2 rounded-xl border border-line px-3 text-sm"><input type="checkbox" name="day" value={x.key} className="checkbox" />{x.label}</label>))}</div></fieldset>
           <p className="help">سانس‌ها پشت‌سرهم و به‌اندازهٔ مدت هر سانس در بازهٔ انتخابی ساخته می‌شوند. سانس همپوشان ساخته نمی‌شود.</p>
-          <button className="btn btn-primary">ایجاد سانس‌ها</button>
+          <SubmitButton className="btn btn-primary">ایجاد سانس‌ها</SubmitButton>
         </form></>)}
       <section className="card mt-6 p-6"><h2 className="section-title mb-3">سانس‌های پیش‌رو</h2>
         {slots.length === 0 ? <p className="text-sm text-ink-500">سانسی ثبت نشده است.</p> : (
@@ -48,8 +49,8 @@ export default async function SlotsPage({ params, searchParams }: { params: Prom
               <div className="min-w-0 flex-1"><p className="font-bold">{formatJalaliWithWeekday(s.startsAt)}، {formatTime(s.startsAt)} تا {formatTime(s.endsAt)}</p><p className="text-ink-500">{sportName} · {formatNumber(s.price)} تومان</p></div>
               <span className={`pill ${ST[s.status][1]}`}>{ST[s.status][0]}</span>
               {(s.status === 'open' || s.status === 'closed') && <>
-                <form action={toggleSlotAction.bind(null, id, s.id, s.status === 'closed')}><button className="btn btn-ghost btn-sm">{s.status === 'open' ? 'بستن' : 'باز کردن'}</button></form>
-                <form action={deleteSlotAction.bind(null, id, s.id)}><button className="btn btn-danger btn-sm">حذف</button></form></>}
+                <form action={toggleSlotAction.bind(null, id, s.id, s.status === 'closed')}><SubmitButton className="btn btn-ghost btn-sm">{s.status === 'open' ? 'بستن' : 'باز کردن'}</SubmitButton></form>
+                <form action={deleteSlotAction.bind(null, id, s.id)}><SubmitButton className="btn btn-danger btn-sm">حذف</SubmitButton></form></>}
             </li>))}</ul>)}</section>
     </div>
   );

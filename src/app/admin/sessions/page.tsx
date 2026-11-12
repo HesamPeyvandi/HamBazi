@@ -7,6 +7,7 @@ import { EmptyState, Pagination } from '@/components/ui/misc';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { RES_STATUS, SESSION_STATUS } from '@/lib/labels';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'نظارت بر سانس‌ها و رزروها' };
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,7 @@ export default async function AdminSessions({ searchParams }: { searchParams: Pr
           <li key={x.r.id} className="card flex flex-wrap items-center gap-3 p-4 text-sm">
             <div className="min-w-0 flex-1"><p className="font-bold">{x.venue} · {x.r.mode === 'full' ? 'رزرو کامل' : 'سانس باز'}</p><p className="text-ink-500">{formatJalaliDateTime(x.startsAt)} · میزبان: {x.host || 'کاربر'} · مبلغ {formatToman(x.r.totalAmount)}</p></div>
             <span className={`pill ${RES_STATUS[x.r.status].cls}`}>{RES_STATUS[x.r.status].label}</span>
-            {['awaiting_payment', 'confirmed'].includes(x.r.status) && <form action={adminCancelReservationAction.bind(null, x.r.id)}><button className="btn btn-danger btn-sm">لغو توسط مدیر</button></form>}</li>))}</ul>)}
+            {['awaiting_payment', 'confirmed'].includes(x.r.status) && <form action={adminCancelReservationAction.bind(null, x.r.id)}><SubmitButton className="btn btn-danger btn-sm">لغو توسط مدیر</SubmitButton></form>}</li>))}</ul>)}
       <div className="mt-4"><Pagination page={data.page} total={data.total} pageSize={15} hrefFor={(p) => href({ page: p })} /></div>
     </div>
   );

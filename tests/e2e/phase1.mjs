@@ -106,6 +106,7 @@ for (const [name, vp, mobile] of [['desktop', { width: 1440, height: 900 }, fals
   await page.screenshot({ path: `${SHOTS}/mobile-onboarding.png`, fullPage: true });
   await page.click('button[type=submit]');
   await page.waitForURL('**/profile');
+  await page.waitForSelector('text=مهارت‌های فوتسال', { timeout: 8000 }).catch(() => {}); // profile streams behind a loading skeleton
   check('onboarding saved and profile shows skills', (await page.locator('text=مهارت‌های فوتسال').count()) === 1);
   await pageChecks(page, 'mobile profile');
   await page.screenshot({ path: `${SHOTS}/mobile-profile.png`, fullPage: true });

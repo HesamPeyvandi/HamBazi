@@ -3,6 +3,7 @@ import { createTeamAction } from '@/server/teams/actions';
 import { JOIN_MODES } from '@/server/teams';
 import { getCities, getSportsList } from '@/server/venues/queries';
 import { getProfileData } from '@/server/profile';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'ساخت تیم' };
 export default async function NewTeam({ searchParams }: { searchParams: Promise<{ err?: string }> }) {
@@ -20,7 +21,7 @@ export default async function NewTeam({ searchParams }: { searchParams: Promise<
         <div><label className="label" htmlFor="description">دربارهٔ تیم (اختیاری)</label><textarea id="description" name="description" rows={3} maxLength={400} className="field" /></div>
         <div><label className="label" htmlFor="joinMode">روش عضوگیری</label><select id="joinMode" name="joinMode" defaultValue="request" className="field">{Object.entries(JOIN_MODES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
         <div><label className="label" htmlFor="maxMembers">حداکثر اعضا</label><input id="maxMembers" name="maxMembers" type="number" min={2} max={50} defaultValue={20} className="field" /></div>
-        <button className="btn btn-primary w-full">ساخت تیم</button>
+        <SubmitButton className="btn btn-primary w-full">ساخت تیم</SubmitButton>
         <p className="help">شما کاپیتان تیم می‌شوید. هر نفر می‌تواند عضو حداکثر ۵ تیم باشد.</p></form></div>
   );
 }

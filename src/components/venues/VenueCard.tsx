@@ -6,6 +6,7 @@ import { formatDecimal, formatNumber, formatToman } from '@/lib/i18n/digits';
 import { formatTime, formatJalaliWithWeekday } from '@/lib/i18n/jalali';
 import { toggleFavoriteAction } from '@/server/favorites/actions';
 import type { VenueCard as VC } from '@/server/venues/queries';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const FAC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   parking: ParkingCircle, locker: Shirt, shower: ShowerHead, ac: Wind, cafe: Coffee, internet: Wifi,
@@ -29,8 +30,8 @@ export function FavButton({ venueId, fav }: { venueId: string; fav?: boolean | n
   if (fav === undefined || fav === null) return <Link href="/login?next=/favorites" aria-label="ورود برای ذخیرهٔ سالن" className={cls}><Heart className="h-5 w-5" aria-hidden /></Link>;
   return (
     <form action={toggleFavoriteAction.bind(null, venueId, !fav)}>
-      <button className={cls} aria-label={fav ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} aria-pressed={fav}>
-        <Heart className={`h-5 w-5 ${fav ? 'text-danger-fg' : ''}`} fill={fav ? 'currentColor' : 'none'} aria-hidden /></button>
+      <SubmitButton spinnerOnly className={cls} aria-label={fav ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} aria-pressed={fav}>
+        <Heart className={`h-5 w-5 ${fav ? 'text-danger-fg' : ''}`} fill={fav ? 'currentColor' : 'none'} aria-hidden /></SubmitButton>
     </form>
   );
 }

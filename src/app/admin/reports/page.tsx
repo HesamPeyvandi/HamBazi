@@ -5,6 +5,7 @@ import { resolveReportAction } from '@/server/trust/actions';
 import { AdminNav } from '@/components/layout/AdminNav';
 import { EmptyState } from '@/components/ui/misc';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'گزارش‌های تخلف' };
 const TYPE_FA: Record<string, string> = { user: 'بازیکن', venue: 'سالن', session: 'سانس', message: 'پیام گفت‌وگو' };
@@ -26,6 +27,6 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
             <form className="mt-3 space-y-2"><label className="label" htmlFor={`n-${r.id}`}>توضیح تصمیم</label><input id={`n-${r.id}`} name="note" className="field" />
               {r.targetType === 'message' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="hide" className="checkbox" />پنهان‌کردن متن پیام برای همه</label>}
               {(r.targetType === 'user' || r.targetType === 'message') && <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="suspend" className="checkbox" />تعلیق حساب کاربر (نشست‌هایش بسته می‌شود)</label>}
-              <div className="flex gap-2"><button formAction={resolveReportAction.bind(null, r.id, 'resolved')} className="btn btn-primary">رسیدگی شد</button><button formAction={resolveReportAction.bind(null, r.id, 'dismissed')} className="btn btn-ghost">رد گزارش</button></div></form></li>))}</ul>)}</div></div>
+              <div className="flex gap-2"><SubmitButton formAction={resolveReportAction.bind(null, r.id, 'resolved')} className="btn btn-primary">رسیدگی شد</SubmitButton><SubmitButton formAction={resolveReportAction.bind(null, r.id, 'dismissed')} className="btn btn-ghost">رد گزارش</SubmitButton></div></form></li>))}</ul>)}</div></div>
   );
 }

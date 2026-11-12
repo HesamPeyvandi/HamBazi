@@ -4,6 +4,7 @@ import { createCancellationPolicyAction, createFeePolicyAction, updateSettingAct
 import { AdminNav } from '@/components/layout/AdminNav';
 import { formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { formatToman, toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'تنظیمات پلتفرم' };
 export default async function AdminSettings({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
@@ -21,14 +22,14 @@ export default async function AdminSettings({ searchParams }: { searchParams: Pr
       <section className="card p-6" aria-labelledby="g-t"><h2 id="g-t" className="section-title">مهلت‌ها</h2>
         <div className="mt-4 space-y-4">{(Object.entries(EDITABLE) as [keyof typeof EDITABLE, (typeof EDITABLE)[keyof typeof EDITABLE]][]).map(([k, d]) => (
           <form key={k} action={updateSettingAction.bind(null, k)} className="flex flex-wrap items-end gap-2"><div className="min-w-56 flex-1"><label className="label" htmlFor={`s-${k}`}>{d.label} ({d.unit})</label>
-            <input id={`s-${k}`} name="value" defaultValue={toFa(cur[k])} inputMode="numeric" className="field" /><p className="help">بین {toFa(d.min)} و {toFa(d.max)}</p></div><button className="btn btn-primary">ذخیره</button></form>))}</div></section>
+            <input id={`s-${k}`} name="value" defaultValue={toFa(cur[k])} inputMode="numeric" className="field" /><p className="help">بین {toFa(d.min)} و {toFa(d.max)}</p></div><SubmitButton className="btn btn-primary">ذخیره</SubmitButton></form>))}</div></section>
 
       <section className="card mt-5 p-6" aria-labelledby="f-t"><h2 id="f-t" className="section-title">کارمزد پلتفرم</h2>
         <p className="mt-2 text-sm">فعلی: <b>{fee ? `${toFa((fee.percentBp / 100).toString().replace('.', '٫'))}٪` : '—'}</b> با حداقل <b>{fee ? formatToman(fee.minToman) : '—'}</b>. تغییر فقط روی رزروهای جدید اثر دارد؛ رزروهای قبلی نسخهٔ خودشان را نگه می‌دارند.</p>
         <form action={createFeePolicyAction} className="mt-4 flex flex-wrap items-end gap-2">
           <div><label className="label" htmlFor="fp">درصد (۰ تا ۳۰)</label><input id="fp" name="percent" defaultValue={fee ? toFa((fee.percentBp / 100).toString().replace('.', '٫')) : ''} inputMode="decimal" className="field !w-32" /></div>
           <div><label className="label" htmlFor="fm">حداقل (تومان)</label><input id="fm" name="minToman" defaultValue={fee ? toFa(fee.minToman) : ''} inputMode="numeric" className="field !w-40" /></div>
-          <button className="btn btn-primary">ثبت کارمزد جدید</button></form></section>
+          <SubmitButton className="btn btn-primary">ثبت کارمزد جدید</SubmitButton></form></section>
 
       <section className="card mt-5 p-6" aria-labelledby="c-t"><h2 id="c-t" className="section-title">سیاست لغو</h2>
         <p className="mt-2 text-sm">نسخهٔ فعلی: <b>{toFa(latest?.version ?? 0)}</b>. هر تغییر یک نسخهٔ جدید می‌سازد و رزروهای قبلی با نسخهٔ خودشان محاسبه می‌شوند. آخرین پلکان باید «۰ ساعت» باشد.</p>
@@ -37,7 +38,7 @@ export default async function AdminSettings({ searchParams }: { searchParams: Pr
           {[0, 1, 2].map((i) => { const t = latest?.tiers[i]; return (
             <div key={i} className="flex flex-wrap items-end gap-2"><div><label className="label" htmlFor={`h${i}`}>پلکان {toFa(i + 1)}: حداقل ساعت مانده</label><input id={`h${i}`} name={`h${i}`} defaultValue={t ? toFa(t.minHoursBefore) : ''} inputMode="numeric" className="field !w-32" /></div>
               <div><label className="label" htmlFor={`p${i}`}>درصد بازگشت</label><input id={`p${i}`} name={`p${i}`} defaultValue={t ? toFa(t.refundPercent) : ''} inputMode="numeric" className="field !w-32" /></div></div>); })}
-          <button className="btn btn-primary">ثبت نسخهٔ جدید سیاست</button></form>
+          <SubmitButton className="btn btn-primary">ثبت نسخهٔ جدید سیاست</SubmitButton></form>
         <p className="help mt-3">تاریخچه: {pols.map((p) => `نسخهٔ ${toFa(p.version)} (${formatJalaliDateTime(p.activeFrom)})`).join('، ')}</p></section>
     </div>
   );

@@ -7,6 +7,7 @@ import { cancelReservationAction } from '@/server/booking/actions';
 import { formatToman, toFa } from '@/lib/i18n/digits';
 import { formatJalaliWithWeekday, formatTime, formatJalaliDateTime } from '@/lib/i18n/jalali';
 import { PAY_STATUS, REFUND_REASON, RES_STATUS } from '@/lib/labels';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'جزئیات رزرو' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -49,7 +50,7 @@ export default async function ReservationPage({ params, searchParams }: { params
       {payable && r.mode === 'full' && (
         <form action={cancelReservationAction.bind(null, r.id)} className="mt-5">
           <p className="mb-2 text-sm text-ink-500">{r.status === 'confirmed' ? `در صورت لغو همین حالا، ${toFa(pct)}٪ مبلغ (شبیه‌سازی‌شده) بازگردانده می‌شود.` : 'لغو در این مرحله بدون هزینه است.'} <Link className="font-bold text-brand-600" href="/cancellation-policy">سیاست لغو</Link></p>
-          <button className="btn btn-danger w-full">لغو رزرو</button></form>)}
+          <SubmitButton className="btn btn-danger w-full">لغو رزرو</SubmitButton></form>)}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { createSessionAction } from '@/server/booking/actions';
 import { splitShare, calcFee } from '@/server/booking/money';
 import { formatToman, toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 /** Split-payment form. The user picks ONLY the number of players; the per-person share is computed automatically. */
 export function SessionForm({ slotId, slotPrice, maxCapacity, defaultTarget, feeBp, feeMin }: { slotId: string; slotPrice: number; maxCapacity: number; defaultTarget: number; feeBp: number; feeMin: number }) {
@@ -37,7 +38,7 @@ export function SessionForm({ slotId, slotPrice, maxCapacity, defaultTarget, fee
       <div><label className="label" htmlFor="visibility">نمایش سانس</label>
         <select id="visibility" name="visibility" className="field"><option value="public">عمومی (در فهرست سانس‌های باز)</option><option value="invite_only">فقط با لینک دعوت</option></select></div>
       <div><label className="label" htmlFor="description">توضیحات (اختیاری)</label><textarea id="description" name="description" rows={3} maxLength={500} className="field" /></div>
-      <button className="btn btn-primary w-full">ایجاد سانس و پرداخت سهم من</button>
+      <SubmitButton className="btn btn-primary w-full">ایجاد سانس و پرداخت سهم من</SubmitButton>
     </form>
   );
 }

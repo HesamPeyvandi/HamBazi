@@ -8,6 +8,7 @@ import { logoutAction } from '@/server/auth/actions';
 import { Avatar, OvrBadge } from '@/components/ui/misc';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
 import { toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'پروفایل من' };
 const LEVEL: Record<string, string> = { beginner: 'مبتدی', intermediate: 'متوسط', pro: 'حرفه‌ای' };
@@ -68,7 +69,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
 
       <p className="mt-5 flex flex-wrap gap-4 text-sm font-bold text-brand-600"><Link href="/profile/commitment">تعهد و تاریخچه</Link><Link href={`/players/${user.id}`}>مشاهدهٔ پروفایل عمومی من</Link><Link href="/favorites">علاقه‌مندی‌ها</Link><Link href="/chat">گفت‌وگوها</Link><Link href="/settings">تنظیمات</Link><Link href="/help">راهنما و تماس</Link></p>
 
-      <form action={logoutAction} className="mt-6"><button className="btn btn-danger w-full"><LogOut className="h-4 w-4" aria-hidden />خروج از حساب</button></form>
+      <form action={logoutAction} className="mt-6"><SubmitButton className="btn btn-danger w-full"><LogOut className="h-4 w-4" aria-hidden />خروج از حساب</SubmitButton></form>
     </div>
   );
 }

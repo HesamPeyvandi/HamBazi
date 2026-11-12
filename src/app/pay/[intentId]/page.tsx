@@ -11,6 +11,7 @@ import { Countdown } from '@/components/booking/Countdown';
 import { formatToman } from '@/lib/i18n/digits';
 import { formatJalaliWithWeekday, formatTime } from '@/lib/i18n/jalali';
 import { PAY_STATUS } from '@/lib/labels';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'پرداخت' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -47,8 +48,8 @@ export default async function PayPage({ params, searchParams }: { params: Promis
         {live ? (
           <>
             <p className="mt-4 rounded-xl bg-page p-3 text-center text-sm">زمان باقی‌مانده برای پرداخت: <Countdown until={holdUntil!.toISOString()} /></p>
-            <form action={payAction.bind(null, i.id)} className="mt-4"><button className="btn btn-primary w-full">پرداخت (شبیه‌سازی)</button></form>
-            {!s && <form action={cancelReservationAction.bind(null, r.id)} className="mt-3"><button className="btn btn-ghost w-full">انصراف و آزاد کردن سانس</button></form>}
+            <form action={payAction.bind(null, i.id)} className="mt-4"><SubmitButton className="btn btn-primary w-full">پرداخت (شبیه‌سازی)</SubmitButton></form>
+            {!s && <form action={cancelReservationAction.bind(null, r.id)} className="mt-3"><SubmitButton className="btn btn-ghost w-full">انصراف و آزاد کردن سانس</SubmitButton></form>}
           </>
         ) : (
           <div className="mt-4"><p role="status" className="rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{i.status === 'created' ? 'مهلت پرداخت به پایان رسیده است.' : `وضعیت پرداخت: ${PAY_STATUS[i.status]}`} لطفاً دوباره اقدام کنید.</p>

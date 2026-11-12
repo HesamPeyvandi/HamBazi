@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/misc';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
 import { formatJalaliShort } from '@/lib/i18n/jalali';
 import { toFa } from '@/lib/i18n/digits';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'مدیریت کاربران' };
 const ROLE: Record<string, string> = { player: 'بازیکن', venue_manager: 'مالک سالن', admin: 'ادمین' };
@@ -31,7 +32,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
             <p className="text-sm text-ink-500"><bdi>{formatPhoneDisplay(r.phone)}</bdi> · عضویت {formatJalaliShort(r.createdAt)}</p></div>
             {r.role !== 'admin' && r.id !== a.id && (
               <form className="flex items-center gap-2"><label className="sr-only" htmlFor={`n-${r.id}`}>توضیح</label><input id={`n-${r.id}`} name="note" placeholder="توضیح (اختیاری)" className="field !w-40" />
-                {r.status === 'active' ? <button formAction={setUserStatusAction.bind(null, r.id, 'suspended')} className="btn btn-danger btn-sm">تعلیق</button> : <button formAction={setUserStatusAction.bind(null, r.id, 'active')} className="btn btn-primary btn-sm">فعال‌سازی</button>}</form>)}</li>))}</ul>)}</div>
+                {r.status === 'active' ? <SubmitButton formAction={setUserStatusAction.bind(null, r.id, 'suspended')} className="btn btn-danger btn-sm">تعلیق</SubmitButton> : <SubmitButton formAction={setUserStatusAction.bind(null, r.id, 'active')} className="btn btn-primary btn-sm">فعال‌سازی</SubmitButton>}</form>)}</li>))}</ul>)}</div>
       {pages > 1 && <nav className="mt-4 flex items-center justify-center gap-3 text-sm" aria-label="صفحه‌بندی">{page > 1 && <Link className="font-bold text-brand-600" href={qs(page - 1)}>قبلی</Link>}<span>صفحهٔ {toFa(page)} از {toFa(pages)}</span>{page < pages && <Link className="font-bold text-brand-600" href={qs(page + 1)}>بعدی</Link>}</nav>}
     </div>
   );

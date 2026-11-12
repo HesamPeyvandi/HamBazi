@@ -3,6 +3,7 @@ import { currentUser } from '@/server/auth/session';
 import { listMySupport, TOPICS } from '@/server/support';
 import { sendSupportAction } from '@/server/support/actions';
 import { formatJalaliShort } from '@/lib/i18n/jalali';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'راهنما و تماس با ما' };
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
           <form action={sendSupportAction} className="space-y-3">
             <div><label className="label" htmlFor="topic">موضوع</label><select id="topic" name="topic" className="field">{Object.entries(TOPICS).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></div>
             <div><label className="label" htmlFor="body">پیام شما</label><textarea id="body" name="body" rows={5} minLength={10} maxLength={2000} required className="field" /></div>
-            <button className="btn btn-primary">ارسال پیام</button>
+            <SubmitButton className="btn btn-primary">ارسال پیام</SubmitButton>
           </form>
         ) : <p className="text-sm">برای ارسال پیام ابتدا <Link className="font-bold text-brand-600" href="/login?next=/help">وارد شوید</Link>.</p>}
         {mine.length > 0 && (

@@ -1,4 +1,4 @@
-import { and, eq, gt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, sql } from 'drizzle-orm';
 import { schema } from '@/db/client';
 import type { Tx } from './core';
 import { E } from './errors';
@@ -42,4 +42,22 @@ export async function assertHoldCap(tx: Tx, userId: string, now = new Date()) {
   const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(schema.reservations)
     .where(and(eq(schema.reservations.hostUserId, userId), eq(schema.reservations.status, 'awaiting_payment'), gt(schema.reservations.holdExpiresAt, now)));
   if (n >= MAX_ACTIVE_HOLDS) throw E.invalid('چند رزرو پرداخت‌نشده دارید. ابتدا آن‌ها را پرداخت یا لغو کنید و سپس دوباره تلاش کنید.');
+}
+
+/**
+ * Idempotency safety net for double submits (slow network + a second tap/click).
+ * If this user already holds this slot (same mode) and still owes a payment, the existing reservation + open intent is returned
+ * instead of failing with "slot no longer available". The slot row lock serialises concurrent duplicates: the loser waits for
+ * the winner to commit and then finds its hold here.
+ */
+export async function findExistingHold(tx: Tx, userId: string, slotId: string, mode: 'full' | 'open_session', now = new Date()) {
+  await lockSlot(tx, slotId);
+  const [r] = await tx.select().from(schema.reservations).where(and(
+    eq(schema.reservations.hostUserId, userId), eq(schema.reservations.slotId, slotId), eq(schema.reservations.mode, mode),
+    eq(schema.reservations.status, 'awaiting_payment'), gt(schema.reservations.holdExpiresAt, now)));
+  if (!r) return null;
+  const [intent] = await tx.select().from(schema.paymentIntents).where(and(
+    eq(schema.paymentIntents.reservationId, r.id), eq(schema.paymentIntents.payerUserId, userId), eq(schema.paymentIntents.status, 'created')))
+    .orderBy(desc(schema.paymentIntents.createdAt)).limit(1);
+  return intent ? { reservation: r, intent } : null;
 }
