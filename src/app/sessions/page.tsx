@@ -8,6 +8,7 @@ import { formatJalaliWithWeekday, formatTime, formatJalaliDateTime } from '@/lib
 import { SESSION_STATUS } from '@/lib/labels';
 import { Suspense } from 'react';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
+import { LiveSearchInput } from '@/components/forms/LiveSearchInput';
 
 export const metadata = { title: 'سانس‌های باز' };
 
@@ -21,7 +22,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
       <p className="mt-1 text-ink-500">به بازی‌های باز بپیوندید و هم‌بازی پیدا کنید.</p>
       <form className="mt-5 flex flex-wrap gap-3" role="search">
         <select name="sport" defaultValue={sp.sport ?? ''} aria-label="ورزش" className="field !w-auto"><option value="">همهٔ ورزش‌ها</option>{sports.map((s) => <option key={s.key} value={s.key}>{s.nameFa}</option>)}</select>
-        <input name="q" defaultValue={sp.q ?? ''} placeholder="نام سالن" aria-label="نام سالن" className="field !w-auto" />
+        <LiveSearchInput defaultValue={sp.q ?? ''} placeholder="نام سالن" aria-label="نام سالن" className="field !w-auto" />
         <button className="btn btn-primary">فیلتر</button>
       </form>
       <div className="mt-6"><Suspense fallback={<div role="status" aria-busy="true" data-testid="skeleton"><span className="sr-only">در حال بارگذاری سانس‌ها…</span><SkeletonGrid count={6} image={false} /></div>}><SessionResults sportId={sportId} q={sp.q?.slice(0, 60)} /></Suspense></div>

@@ -2,6 +2,7 @@ import { identityColor } from '@/lib/ui/identity-color';
 import Link from 'next/link';
 import { Star, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatDecimal, formatNumber, toFa } from '@/lib/i18n/digits';
+import { bundledVariants } from '@/lib/images';
 
 export function Rating({ value, count, size = 'sm' }: { value: number; count?: number; size?: 'sm' | 'md' }) {
   return (
@@ -26,8 +27,9 @@ export function Stars({ value }: { value: number }) {
 export function Avatar({ src, name, size = 40, seed }: { src?: string | null; name: string; size?: number; seed?: string }) {
   const c = identityColor(seed || name || '؟');
   const initials = (name || '؟').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('‌');
+  const av = src ? bundledVariants(src) : null; // bundled demo avatars ship as small WebP files
   // eslint-disable-next-line @next/next/no-img-element
-  return src ? <img src={src} alt="" width={size} height={size} className="rounded-full object-cover bg-brand-50" style={{ width: size, height: size }} loading="lazy" />
+  return src ? <img src={av ? av.fallback : src} srcSet={av ? av.webp : undefined} sizes={av ? `${size}px` : undefined} alt="" width={size} height={size} decoding="async" className="rounded-full object-cover bg-brand-50" style={{ width: size, height: size }} loading="lazy" />
     : <span className="inline-flex items-center justify-center rounded-full font-bold" style={{ width: size, height: size, fontSize: size * 0.4, backgroundColor: c.bg, color: c.fg }} aria-hidden>{initials}</span>;
 }
 

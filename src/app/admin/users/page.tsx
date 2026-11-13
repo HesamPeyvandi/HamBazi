@@ -8,6 +8,7 @@ import { formatPhoneDisplay } from '@/lib/i18n/phone';
 import { formatJalaliShort } from '@/lib/i18n/jalali';
 import { toFa } from '@/lib/i18n/digits';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { LiveSearchInput } from '@/components/forms/LiveSearchInput';
 
 export const metadata = { title: 'مدیریت کاربران' };
 const ROLE: Record<string, string> = { player: 'بازیکن', venue_manager: 'مالک سالن', admin: 'ادمین' };
@@ -21,7 +22,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     <div className="container-page max-w-4xl py-8"><h1 className="mb-4 text-2xl font-extrabold">کاربران</h1><AdminNav current="/admin/users" />
       {q.ok && <p role="status" className="mb-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">انجام شد.</p>}
       {q.err && <p role="alert" className="mb-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
-      <form className="flex flex-wrap items-end gap-2" role="search"><div className="min-w-48 flex-1"><label className="label" htmlFor="uq">نام یا شماره</label><input id="uq" name="q" defaultValue={q.q ?? ''} className="field" /></div>
+      <form className="flex flex-wrap items-end gap-2" role="search"><div className="min-w-48 flex-1"><label className="label" htmlFor="uq">نام یا شماره</label><LiveSearchInput id="uq" defaultValue={q.q ?? ''} className="field" /></div>
         <div><label className="label" htmlFor="ur">نقش</label><select id="ur" name="role" defaultValue={q.role ?? ''} className="field"><option value="">همه</option>{Object.entries(ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
         <div><label className="label" htmlFor="us">وضعیت</label><select id="us" name="status" defaultValue={q.status ?? ''} className="field"><option value="">همه</option><option value="active">فعال</option><option value="suspended">تعلیق</option></select></div>
         <button className="btn btn-primary">جستجو</button></form>

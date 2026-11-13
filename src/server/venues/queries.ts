@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
 import { jalaliToUtc, tehranParts, tehranWallToUtc } from '@/lib/i18n/jalali';
@@ -145,9 +146,7 @@ export async function slotsForDay(venueId: string, day: { jy: number; jm: number
     .orderBy(asc(schema.timeSlots.startsAt));
 }
 
-export async function getCities() {
-  return db().select().from(schema.cities).orderBy(desc(schema.cities.isDefault), asc(schema.cities.nameFa));
-}
-export async function getSportsList() {
-  return db().select().from(schema.sports).where(eq(schema.sports.active, true));
-}
+export const getCities = cache(async () =>
+  db().select().from(schema.cities).orderBy(desc(schema.cities.isDefault), asc(schema.cities.nameFa)));
+export const getSportsList = cache(async () =>
+  db().select().from(schema.sports).where(eq(schema.sports.active, true)));

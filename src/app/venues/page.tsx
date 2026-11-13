@@ -11,6 +11,7 @@ import { parseVenueParams } from '@/server/venues/params';
 import { formatNumber, toFa } from '@/lib/i18n/digits';
 import { Suspense } from 'react';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
+import { Picture } from '@/components/ui/Picture';
 
 export const metadata = { title: 'سالن‌های ورزشی' };
 
@@ -29,8 +30,7 @@ export default async function VenuesPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hall-b.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover opacity-35" />
+        <Picture src="/img/hall-b.jpg" alt="" aria-hidden priority sizes="100vw" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-35" />
         <div className="container-page pb-10 pt-24">
           <nav aria-label="مسیر" className="mb-4 text-xs text-white/70"><Link href="/">خانه</Link> <span aria-hidden>›</span> سالن‌ها</nav>
           <h1 className="text-3xl font-extrabold sm:text-4xl">سالن‌های ورزشی</h1>

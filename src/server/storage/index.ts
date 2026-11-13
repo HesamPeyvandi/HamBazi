@@ -3,7 +3,8 @@
  *  - BLOB_READ_WRITE_TOKEN set  -> Vercel Blob (demo/production on Vercel).
  *  - otherwise, non-production  -> local disk under .uploads/ (development only; Vercel's disk is read-only).
  *  - otherwise                   -> uploads are refused with a clear message.
- * Bundled demo images use keys like "img/hall-a.jpg" (served from /public).
+ * Bundled demo images use keys like "img/hall-a.jpg" (served from /public as responsive AVIF/WebP variants:
+ * the key keeps its legacy .jpg name and <Picture> / lib/images.ts map it to the generated files).
  */
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';

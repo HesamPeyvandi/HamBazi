@@ -7,6 +7,7 @@ import { EmptyState, Pagination } from '@/components/ui/misc';
 import { toFa } from '@/lib/i18n/digits';
 import { Suspense } from 'react';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
+import { LiveSearchInput } from '@/components/forms/LiveSearchInput';
 
 export const metadata = { title: 'تیم‌ها و گروه‌ها' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -28,7 +29,7 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
         <ul className="flex flex-wrap gap-2">{mine.map((t) => <li key={t.id}><Link href={`/teams/${t.id}`} className="pill pill-green !px-4 !py-2 !text-sm">{t.name}{t.role === 'captain' ? ' · کاپیتان' : ''}</Link></li>)}</ul></section>}
 
       <form className="mt-6 flex flex-wrap items-end gap-3" role="search" aria-label="جستجوی تیم">
-        <div className="min-w-48 flex-1"><label className="label" htmlFor="tq">نام تیم</label><input id="tq" name="q" defaultValue={q.q ?? ''} className="field" /></div>
+        <div className="min-w-48 flex-1"><label className="label" htmlFor="tq">نام تیم</label><LiveSearchInput id="tq" defaultValue={q.q ?? ''} className="field" /></div>
         <div><label className="label" htmlFor="ts">ورزش</label><select id="ts" name="sport" defaultValue={q.sport ?? ''} className="field"><option value="">همه</option>{sports.map((s) => <option key={s.id} value={s.id}>{s.nameFa}</option>)}</select></div>
         <div><label className="label" htmlFor="tc">شهر</label><select id="tc" name="city" defaultValue={q.city ?? ''} className="field"><option value="">همه</option>{cities.map((c) => <option key={c.id} value={c.id}>{c.nameFa}</option>)}</select></div>
         <button className="btn btn-outline">جستجو</button></form>

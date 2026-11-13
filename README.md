@@ -15,7 +15,7 @@ Jalali dates, Persian digits, integer toman, and OTP-by-SMS login.
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-211%20unit%20%2B%20498%2B%20E2E%20checks-brightgreen)
+![Tests](https://img.shields.io/badge/tests-219%20unit%20%2B%20530%2B%20E2E%20checks-brightgreen)
 ![a11y](https://img.shields.io/badge/axe--core-0%20serious%20violations-brightgreen)
 ![Status](https://img.shields.io/badge/status-demo%20(simulated%20payments)-orange)
 
@@ -37,6 +37,7 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 
 - [Screenshots](#screenshots)
 - [Splash, instant feedback and skeletons](#splash-instant-feedback-and-loading-skeletons)
+- [Performance](#performance)
 - [Install as an app](#install-as-an-app)
 - [Features](#features)
 - [How payment works](#how-payment-works)
@@ -109,6 +110,10 @@ Visitors who open HamBazi in a normal browser get a popup right away offering to
 - **Loading skeletons** — shimmering placeholders (`src/components/ui/Skeleton.tsx`) for the public lists (venues, open sessions, teams; streamed with `Suspense` so the heading and filters appear instantly) and for private pages (`loading.tsx`: profile, favourites, notifications, dashboard). Public detail pages and role-gated areas keep **real 404 / 307 status codes**; guests of private areas are redirected by `src/proxy.ts` before anything renders.
 
 <p align="center"><img src="docs/screenshots/14-splash-skeleton.jpg" alt="Splash screen on desktop and mobile, and a skeleton while the list loads" width="100%"></p>
+
+## Performance
+
+Images are shipped as responsive **AVIF + WebP** only (`npm run images:optimize`), with a 30-day cache; search boxes are **debounced** (one request 400 ms after the last keystroke), polling and fetches are **de-duplicated**, and the per-request user/city/sport lookups are memoised. Local Lighthouse (mobile): home 61 → 88, venues 87 → 93, venue page 61 → 91; page weight 1.4 MB → ~0.55 MB. Details: [`docs/21-phase12-handoff.md`](docs/21-phase12-handoff.md).
 
 ## Features
 
@@ -267,7 +272,7 @@ Copy `.env.example` to `.env`. Secrets must be ≥ 32 characters (`openssl rand 
 
 ## Testing
 
-- **Vitest — 211 tests** on a real PostgreSQL: concurrent booking and joins, double-booking guard, idempotent payments and refunds, double-submit idempotency (same hold/intent returned on a repeated request), OTP rules, RBAC/IDOR, trust scoring, split-share math, policy versioning, teams, chat membership/edit/delete, geo helpers, play-time parsing, SMS adapter (with a mocked `fetch`), environment safety.
+- **Vitest — 219 tests** on a real PostgreSQL: concurrent booking and joins, double-booking guard, idempotent payments and refunds, double-submit idempotency (same hold/intent returned on a repeated request), OTP rules, RBAC/IDOR, trust scoring, split-share math, policy versioning, teams, chat membership/edit/delete, geo helpers, play-time parsing, SMS adapter (with a mocked `fetch`), environment safety.
 - **Playwright E2E** drives the production build through real journeys (login → book → pay → session → attendance → rating → teams → chat → admin) plus RTL overflow, Persian-digit, alignment, PWA, SEO and axe checks on mobile and desktop.
 
 ```bash
@@ -338,12 +343,13 @@ docs/             Design, architecture, deployment, phase handoffs
 | 9 | Hardening, Kavenegar SMS, SEO, health check, clean-up | ✅ |
 | 10 | Install-the-app popup and footer entry, sample-data polish | ✅ |
 | 11 | Logo splash, spinner + double-submit protection, loading skeletons (performance step 1) | ✅ |
-| 12 | Performance: image optimisation (WebP/AVIF) and further steps | ⏳ |
-| 13 | Real payment gateway — on hold; payments stay simulated | ⏸ |
+| 12 | Performance step 2: AVIF/WebP images, no duplicate requests, debounced search | ✅ |
+| 13 | Performance: further steps (as requested) | ⏳ |
+| 14 | Real payment gateway — on hold; payments stay simulated | ⏸ |
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/20-phase11-handoff.md`](docs/20-phase11-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/21-phase12-handoff.md`](docs/21-phase12-handoff.md).
 
 ## License
 

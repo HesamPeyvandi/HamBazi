@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { singleFlight } from '@/lib/client/single-flight';
 import { Ban, Check, CheckCheck, ChevronDown, Copy, CornerUpLeft, Flag, Pencil, Send, Trash2, X } from 'lucide-react';
 import { identityColor } from '@/lib/ui/identity-color';
 import { Avatar } from '@/components/ui/misc';
@@ -82,11 +83,14 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
   }, []);
 
   useEffect(() => {
-    let stopped = false;
+    let stopped = false, running = false;
+    const ctl = new AbortController();
     async function tick() {
-      if (stopped || document.visibilityState !== 'visible') return; // paused while hidden; resumes on visibilitychange
+      // one poll at a time: a visibilitychange (or a re-run) while a request is still in flight must not start a second chain
+      if (stopped || running || document.visibilityState !== 'visible') return; // paused while hidden; resumes on visibilitychange
+      running = true;
       try {
-        const r = await fetch(`/api/chat/rooms/${roomId}/messages?after=${last.current}&mark=1&upd=${upd.current}`, { cache: 'no-store' });
+        const r = await fetch(`/api/chat/rooms/${roomId}/messages?after=${last.current}&mark=1&upd=${upd.current}`, { cache: 'no-store', signal: ctl.signal });
         if (r.status === 429) delay.current = SLOW;
         else if (r.status === 401 || r.status === 404) { setFatal(r.status === 401 ? 'نشست شما پایان یافته است. دوباره وارد شوید.' : 'دسترسی شما به این گفت‌وگو پایان یافته است.'); return; }
         else if (r.ok) {
@@ -96,22 +100,26 @@ export function ChatRoom({ roomId, initial, hasMoreInitial, canWrite: canWriteIn
           replaceMsgs(j.updates);
           if (j.messages.length || j.updates.length) { merge(j.messages); delay.current = FAST; } else delay.current = Math.min(Math.round(delay.current * 1.5), SLOW);
         }
-      } catch { delay.current = SLOW; /* offline: keep trying slowly */ }
+      } catch { if (stopped) return; delay.current = SLOW; /* offline: keep trying slowly */ }
+      finally { running = false; }
       if (!stopped) timer.current = setTimeout(tick, delay.current);
     }
     timer.current = setTimeout(tick, delay.current);
-    const wake = () => { if (document.visibilityState === 'visible') { if (timer.current) clearTimeout(timer.current); delay.current = FAST; void tick(); } };
+    const wake = () => { if (document.visibilityState === 'visible' && !running) { if (timer.current) clearTimeout(timer.current); delay.current = FAST; void tick(); } };
     document.addEventListener('visibilitychange', wake);
-    return () => { stopped = true; document.removeEventListener('visibilitychange', wake); if (timer.current) clearTimeout(timer.current); };
+    return () => { stopped = true; ctl.abort(); document.removeEventListener('visibilitychange', wake); if (timer.current) clearTimeout(timer.current); };
   }, [roomId, merge, replaceMsgs]);
 
   useEffect(() => { if (stick.current) listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [msgs]);
 
   async function older() {
     const first = msgs[0]?.seq; if (!first) return;
-    const r = await fetch(`/api/chat/rooms/${roomId}/messages?before=${first}`, { cache: 'no-store' });
-    if (!r.ok) return;
-    const j = await r.json() as { messages: MessageDTO[]; hasMore: boolean };
+    // a double click on "load older" shares ONE request (and one parsed result)
+    const j = await singleFlight(`chat-older:${roomId}:${first}`, async () => {
+      const r = await fetch(`/api/chat/rooms/${roomId}/messages?before=${first}`, { cache: 'no-store' });
+      return r.ok ? await r.json() as { messages: MessageDTO[]; hasMore: boolean } : null;
+    });
+    if (!j) return;
     stick.current = false;
     setMsgs((cur) => [...j.messages.filter((m) => !cur.some((c) => c.seq === m.seq)), ...cur]);
     setHasMore(j.hasMore);

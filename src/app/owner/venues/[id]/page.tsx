@@ -9,6 +9,7 @@ import { VenueForm } from '@/components/owner/VenueForm';
 import { publicUrl } from '@/server/storage';
 import { formatPhoneDisplay } from '@/lib/i18n/phone';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { Picture } from '@/components/ui/Picture';
 
 export const metadata = { title: 'ویرایش سالن' };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -38,8 +39,7 @@ export default async function EditVenue({ params, searchParams }: { params: Prom
       <section className="card mt-5 p-6" aria-labelledby="img-t"><h2 id="img-t" className="section-title mb-3">عکس‌ها</h2>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">{d.images.map((im) => (
           <li key={im.id} className="overflow-hidden rounded-xl border border-line">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={publicUrl(im.storageKey)} alt="" className="aspect-video w-full object-cover" />
+            <Picture src={publicUrl(im.storageKey)} alt="" sizes="(min-width: 1024px) 30vw, 100vw" className="aspect-video w-full object-cover" />
             <form action={removeImageAction.bind(null, v.id, im.id)}><SubmitButton className="btn btn-ghost btn-sm w-full rounded-none">حذف</SubmitButton></form></li>))}</ul>
         {d.images.length === 0 && <p className="text-sm text-ink-500">هنوز عکسی اضافه نشده است.</p>}
         <form action={uploadImageAction.bind(null, v.id)} className="mt-4 flex flex-wrap items-end gap-3">

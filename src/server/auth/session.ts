@@ -1,4 +1,5 @@
 import { and, eq, gt, isNull, lt } from 'drizzle-orm';
+import { cache } from 'react';
 import { cookies, headers } from 'next/headers';
 import { db, schema } from '@/db/client';
 import { env } from '../env';
@@ -52,6 +53,7 @@ export async function clientContext() {
 }
 
 export type SessionUser = typeof schema.users.$inferSelect;
-export async function currentUser(): Promise<SessionUser | null> {
+/** Memoised per request (React cache): layout, header and page all ask for the user, but the database is hit once. */
+export const currentUser = cache(async (): Promise<SessionUser | null> => {
   return getUserBySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
-}
+});

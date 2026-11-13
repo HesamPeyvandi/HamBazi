@@ -26,6 +26,7 @@ Status: **Phase 5 complete** (automatic split payment, teams & matching, English
 | [18-phase9-handoff](18-phase9-handoff.md) | تحویل فاز ۹: سخت‌سازی، پیامک کاوه‌نگار، سئو، پاک‌سازی |
 | [19-phase10-handoff](19-phase10-handoff.md) | تحویل فاز ۱۰: پاپ‌آپ و گزینهٔ فوتر نصب وب‌اپ، اصلاح داده‌های نمونه |
 | [20-phase11-handoff](20-phase11-handoff.md) | تحویل فاز ۱۱: اسپلش لوگو، اسپینر و قفل دوبار‌کلیک، اسکلت لودینگ، تست سرعت پایه |
+| [21-phase12-handoff](21-phase12-handoff.md) | تحویل فاز ۱۲: تصاویر AVIF/WebP، حذف درخواست‌های تکراری، debounce جستجو |
 | [FONT](FONT.md) | How to replace the brand font |
 | [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 

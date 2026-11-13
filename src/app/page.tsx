@@ -6,6 +6,7 @@ import { ShieldCheck, Star, Users, Zap, ArrowLeft, Volleyball } from 'lucide-rea
 import { SearchBar } from '@/components/venues/SearchBar';
 import { VenueGridCard } from '@/components/venues/VenueCard';
 import { featuredVenues, getCities, getSportsList } from '@/server/venues/queries';
+import { Picture } from '@/components/ui/Picture';
 
 export const metadata = { title: 'هم‌بازی — سالن رو پیدا کن، هم‌بازیت رو هم' };
 
@@ -22,10 +23,7 @@ export default async function HomePage() {
   return (
     <>
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hero.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 hidden h-full w-full object-cover object-[30%_50%] lg:block" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/img/hall-a.jpg" alt="" aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover lg:hidden" />
+        <Picture src="/img/hall-a.jpg" art={{ media: '(min-width: 1024px)', src: '/img/hero.jpg' }} alt="" aria-hidden priority sizes="100vw" className="absolute inset-0 -z-10 h-full w-full object-cover lg:object-[30%_50%]" />
         {/* desktop: gradient only over the inline-start third (the text side); mobile: a light even tint so the text stays readable */}
         <div aria-hidden className="absolute inset-0 -z-10 bg-brand-950/35 lg:hidden" />
         <div aria-hidden className="absolute inset-y-0 start-0 -z-10 hidden w-1/3 bg-gradient-to-l from-brand-950/85 via-brand-950/40 to-transparent lg:block" />

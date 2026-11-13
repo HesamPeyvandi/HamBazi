@@ -7,6 +7,7 @@ import { formatTime, formatJalaliWithWeekday } from '@/lib/i18n/jalali';
 import { toggleFavoriteAction } from '@/server/favorites/actions';
 import type { VenueCard as VC } from '@/server/venues/queries';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { Picture } from '@/components/ui/Picture';
 
 export const FAC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   parking: ParkingCircle, locker: Shirt, shower: ShowerHead, ac: Wind, cafe: Coffee, internet: Wifi,
@@ -41,8 +42,7 @@ export function VenueGridCard({ v, fav }: { v: VC; fav?: boolean | null }) {
     <article className="card group relative flex flex-col overflow-hidden">
       <FavButton venueId={v.id} fav={fav} />
       <Link href={`/venues/${v.slug}`} className="relative block aspect-[16/10] overflow-hidden bg-brand-50" aria-label={`مشاهدهٔ ${v.name}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <Picture src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute start-3 bottom-3 inline-flex items-center gap-1 rounded-lg bg-brand-600 px-2 py-1 text-xs font-bold text-white">
           <Star className="h-3.5 w-3.5" fill="#fff" aria-hidden />{formatDecimal(v.ratingAvg)}</span>
       </Link>
@@ -68,8 +68,7 @@ export function VenueListItem({ v, fav }: { v: VC; fav?: boolean | null }) {
       <div className="relative shrink-0 sm:w-64">
       <FavButton venueId={v.id} fav={fav} />
       <Link href={`/venues/${v.slug}`} className="relative block aspect-[16/10] h-full overflow-hidden rounded-xl sm:aspect-auto" aria-label={`مشاهدهٔ ${v.name}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} loading="lazy" className="h-full w-full object-cover" />
+        <Picture src={publicUrl(v.images[0] ?? 'img/hall-a.jpg')} alt={v.name} sizes="(min-width: 640px) 260px, 100vw" className="h-full w-full object-cover" />
       </Link>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2 py-1">
