@@ -349,7 +349,7 @@ docs/             Design, architecture, deployment, phase handoffs
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/21-phase12-handoff.md`](docs/21-phase12-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/22-phase12b-handoff.md`](docs/22-phase12b-handoff.md).
 
 ## License
 

@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",
-    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
     "jalaali-js": "^2.0.1",
     "leaflet": "^1.9.4",
@@ -28,11 +27,9 @@
     "postgres": "^3.4.9",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "vazirmatn": "^33.0.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/jalaali-js": "^1.2.0",
     "@types/leaflet": "^1.9.12",
@@ -45,7 +42,6 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.3",
     "postcss": "^8.5.31",
-    "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

@@ -24,8 +24,8 @@ const nextConfig = {
         { key: 'Service-Worker-Allowed', value: '/' },
       ],
     }, {
-      // Generated image variants and fonts: long browser/CDN cache (Next's default for /public files is max-age=0).
-      source: '/:dir(img|fonts)/:path*',
+      // Generated image variants, fonts and PWA icons: long browser/CDN cache (Next's default for /public files is max-age=0).
+      source: '/:dir(img|fonts|icons)/:path*',
       headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' }],
     }, {
       source: '/(.*)',

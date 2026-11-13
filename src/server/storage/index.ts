@@ -31,6 +31,9 @@ export function sniffImage(buf: Buffer): 'jpeg' | 'png' | 'webp' | null {
   return null;
 }
 
+/** Upper bound for calls to the external Blob API, so a slow storage service can never hang an upload request. */
+const BLOB_TIMEOUT_MS = 20_000;
+
 /** Validates, re-encodes (strips metadata, caps size) and stores an uploaded image. Returns the stored key/URL. */
 export async function storeImage(input: Buffer, folder: string): Promise<string> {
   if (input.length === 0) throw new DomainError('upload', 'فایلی انتخاب نشده است.');
@@ -44,7 +47,7 @@ export async function storeImage(input: Buffer, folder: string): Promise<string>
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (token) {
     const { put } = await import('@vercel/blob');
-    const r = await put(name, out, { access: 'public', contentType: 'image/webp', token, addRandomSuffix: false });
+    const r = await put(name, out, { access: 'public', contentType: 'image/webp', token, addRandomSuffix: false, abortSignal: AbortSignal.timeout(BLOB_TIMEOUT_MS) });
     return r.url;
   }
   if (env().isProduction) throw new DomainError('upload', 'ذخیره‌سازی تصاویر پیکربندی نشده است.');
@@ -58,7 +61,7 @@ export async function storeImage(input: Buffer, folder: string): Promise<string>
 export async function deleteImage(key: string) {
   if (key.startsWith('img/')) return;
   try {
-    if (/^https?:\/\//.test(key) && process.env.BLOB_READ_WRITE_TOKEN) { const { del } = await import('@vercel/blob'); await del(key, { token: process.env.BLOB_READ_WRITE_TOKEN }); }
+    if (/^https?:\/\//.test(key) && process.env.BLOB_READ_WRITE_TOKEN) { const { del } = await import('@vercel/blob'); await del(key, { token: process.env.BLOB_READ_WRITE_TOKEN, abortSignal: AbortSignal.timeout(BLOB_TIMEOUT_MS) }); }
     else if (key.startsWith('/api/uploads/')) await unlink(path.join(UPLOAD_DIR, key.slice('/api/uploads/'.length)));
   } catch { /* best-effort cleanup; the database row is the source of truth */ }
 }
