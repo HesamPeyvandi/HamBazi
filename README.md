@@ -264,6 +264,7 @@ Copy `.env.example` to `.env`. Secrets must be ≥ 32 characters (`openssl rand 
 | `npm run dev` / `build` / `start` | Develop / build / run the production build |
 | `npm run db:migrate` | Apply SQL migrations |
 | `npm run db:seed` | Seed demo data (dev/demo only) |
+| `npm run db:slots [days]` | Demo only: add the missing slots for the next 14 days (idempotent, never deletes). The seed only creates 10 days, so a demo DB shows "no free slots" afterwards; set `DEMO_AUTO_SLOTS=1` (non-production `APP_ENV`) to do this automatically on each Vercel build and daily cron run |
 | `npm run db:reset` | Drop and recreate the dev schema |
 | `npm run db:generate` | Generate a migration from `src/db/schema.ts` |
 | `npm test` | Vitest (needs `hambazi_test`, or set `DATABASE_URL_TEST`) |
@@ -349,7 +350,7 @@ docs/             Design, architecture, deployment, phase handoffs
 
 ## Documentation
 
-Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/22-phase12b-handoff.md`](docs/22-phase12b-handoff.md).
+Detailed design and handoff documents live in [`docs/`](docs/00-README.md) (written in Persian). Start with the [index](docs/00-README.md); the latest handoff is [`docs/23-phase12c-handoff.md`](docs/23-phase12c-handoff.md).
 
 ## License
 

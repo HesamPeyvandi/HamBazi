@@ -3,7 +3,8 @@
 //  1. Applies pending SQL migrations (idempotent). Uses DATABASE_URL_UNPOOLED when present (Neon's direct URL), else DATABASE_URL.
 //  2. If SEED_IF_EMPTY=1 and APP_ENV is not "production": loads the demo data ONLY when the database has no cities yet.
 //     (The seed script wipes tables, so it is never run on a database that already has data.)
-//  3. next build.
+//  3. If DEMO_AUTO_SLOTS=1 (and APP_ENV is not "production"): adds the missing demo slots for the next 14 days (idempotent).
+//  4. next build.
 // Only the production environment touches the database; preview builds skip steps 1–2. "--db-only" stops after step 2.
 import { spawnSync } from 'node:child_process';
 import postgres from 'postgres';
@@ -25,6 +26,10 @@ if (touchDb && process.env.DATABASE_URL) {
     await sql.end();
     if (n === 0) { console.log('▶ database is empty: loading demo data'); run('npx', ['tsx', 'src/db/seed.ts']); }
     else console.log(`▶ demo data not loaded (database already has data: ${n} cities)`);
+  }
+  if (process.env.DEMO_AUTO_SLOTS === '1' && process.env.APP_ENV !== 'production') {
+    console.log('▶ DEMO_AUTO_SLOTS=1: adding the missing demo slots (idempotent)');
+    run('npx', ['tsx', 'src/db/refresh-slots.ts'], { DATABASE_URL: direct });
   }
 } else console.log('▶ database steps skipped (' + (touchDb ? 'no DATABASE_URL' : `VERCEL_ENV=${process.env.VERCEL_ENV}`) + ')');
 
