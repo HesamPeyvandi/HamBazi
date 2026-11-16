@@ -21,8 +21,9 @@ export default async function AdminSettings({ searchParams }: { searchParams: Pr
 
       <section className="card p-6" aria-labelledby="g-t"><h2 id="g-t" className="section-title">مهلت‌ها</h2>
         <div className="mt-4 space-y-4">{(Object.entries(EDITABLE) as [keyof typeof EDITABLE, (typeof EDITABLE)[keyof typeof EDITABLE]][]).map(([k, d]) => (
-          <form key={k} action={updateSettingAction.bind(null, k)} className="flex flex-wrap items-end gap-2"><div className="min-w-56 flex-1"><label className="label" htmlFor={`s-${k}`}>{d.label} ({d.unit})</label>
-            <input id={`s-${k}`} name="value" defaultValue={toFa(cur[k])} inputMode="numeric" className="field" /><p className="help">بین {toFa(d.min)} و {toFa(d.max)}</p></div><SubmitButton className="btn btn-primary">ذخیره</SubmitButton></form>))}</div></section>
+          <form key={k} action={updateSettingAction.bind(null, k)}><label className="label" htmlFor={`s-${k}`}>{d.label} ({d.unit})</label>
+            <div className="flex items-center gap-2"><input id={`s-${k}`} name="value" defaultValue={toFa(cur[k])} inputMode="numeric" className="field min-w-0 flex-1" /><SubmitButton className="btn btn-primary shrink-0">ذخیره</SubmitButton></div>
+            <p className="help">بین {toFa(d.min)} و {toFa(d.max)}</p></form>))}</div></section>
 
       <section className="card mt-5 p-6" aria-labelledby="f-t"><h2 id="f-t" className="section-title">کارمزد پلتفرم</h2>
         <p className="mt-2 text-sm">فعلی: <b>{fee ? `${toFa((fee.percentBp / 100).toString().replace('.', '٫'))}٪` : '—'}</b> با حداقل <b>{fee ? formatToman(fee.minToman) : '—'}</b>. تغییر فقط روی رزروهای جدید اثر دارد؛ رزروهای قبلی نسخهٔ خودشان را نگه می‌دارند.</p>

@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '@/db/client';
 import { audit } from '@/server/audit';
+import { applyBlocks } from '@/db/blocks-sql';
 import { DomainError, E } from '@/server/booking/errors';
 import { lockSlot } from '@/server/booking/lifecycle';
 import { FACILITIES } from '@/lib/facilities';
@@ -198,6 +199,7 @@ export async function createSlots(actor: Actor, venueId: string, b: SlotBatch, n
       }
     }
   }
+  await applyBlocks(db(), venueId); // standing reservations stay closed to the public
   await audit(actor.id, 'slots.create', 'venue', venueId, { created, skipped });
   return { created, skipped };
 }
@@ -209,6 +211,7 @@ export async function setSlotOpen(actor: Actor, slotId: string, open: boolean) {
     if (!slot) throw E.notFound();
     await assertManages(actor, slot.venueId);
     if (!['open', 'closed'].includes(slot.status)) throw E.badState();
+    if (slot.blockId) throw E.invalid('این سانس برای رزرو دائمی بسته شده است. برای باز کردن، رزرو دائمی را لغو یا ویرایش کنید.');
     await tx.update(schema.timeSlots).set({ status: open ? 'open' : 'closed', version: slot.version + 1 }).where(eq(schema.timeSlots.id, slotId));
   });
 }

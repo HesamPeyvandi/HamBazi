@@ -11,6 +11,7 @@ import { SubmitButton } from '@/components/ui/SubmitButton';
 
 export const metadata = { title: 'مدیریت سانس‌ها' };
 const UUID = /^[0-9a-f-]{36}$/i;
+// closed + blockId = held back for a standing reservation
 const ST: Record<string, [string, string]> = { open: ['باز', 'pill-green'], closed: ['بسته', 'pill-warn'], held: ['در حال رزرو', 'pill-info'], booked: ['رزرو شده', 'pill-danger'] };
 
 export default async function SlotsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; skipped?: string; err?: string }> }) {
@@ -25,7 +26,7 @@ export default async function SlotsPage({ params, searchParams }: { params: Prom
   return (
     <div className="container-page max-w-3xl py-8">
       <nav className="mb-3 text-sm text-ink-500"><Link href={`/owner/venues/${id}`}>{d.venue.name}</Link> › سانس‌ها</nav>
-      <h1 className="text-2xl font-extrabold">مدیریت سانس‌ها</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-2xl font-extrabold">مدیریت سانس‌ها</h1><Link href={`/owner/venues/${id}/blocks`} className="btn btn-outline btn-sm">رزروهای دائمی</Link></div>
       {d.venue.status !== 'published' ? <p className="card mt-4 p-5">سانس‌ها پس از تأیید سالن قابل ایجاد هستند.</p> : (<>
         {q.ok && <p role="status" className="mt-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">{toFa(q.ok)} سانس ایجاد شد{q.skipped && q.skipped !== '0' ? ` (${toFa(q.skipped)} مورد تکراری/همپوشان یا گذشته نادیده گرفته شد)` : ''}.</p>}
         {q.err && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
@@ -47,8 +48,8 @@ export default async function SlotsPage({ params, searchParams }: { params: Prom
           <ul className="divide-y divide-line">{slots.map(({ slot: s, sportName }) => (
             <li key={s.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
               <div className="min-w-0 flex-1"><p className="font-bold">{formatJalaliWithWeekday(s.startsAt)}، {formatTime(s.startsAt)} تا {formatTime(s.endsAt)}</p><p className="text-ink-500">{sportName} · {formatNumber(s.price)} تومان</p></div>
-              <span className={`pill ${ST[s.status][1]}`}>{ST[s.status][0]}</span>
-              {(s.status === 'open' || s.status === 'closed') && <>
+              <span className={`pill ${s.blockId ? 'pill-info' : ST[s.status][1]}`}>{s.blockId ? 'رزرو دائمی' : ST[s.status][0]}</span>
+              {(s.status === 'open' || (s.status === 'closed' && !s.blockId)) && <>
                 <form action={toggleSlotAction.bind(null, id, s.id, s.status === 'closed')}><SubmitButton className="btn btn-ghost btn-sm">{s.status === 'open' ? 'بستن' : 'باز کردن'}</SubmitButton></form>
                 <form action={deleteSlotAction.bind(null, id, s.id)}><SubmitButton className="btn btn-danger btn-sm">حذف</SubmitButton></form></>}
             </li>))}</ul>)}</section>

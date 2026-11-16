@@ -27,10 +27,15 @@ if (touchDb && process.env.DATABASE_URL) {
     if (n === 0) { console.log('▶ database is empty: loading demo data'); run('npx', ['tsx', 'src/db/seed.ts']); }
     else console.log(`▶ demo data not loaded (database already has data: ${n} cities)`);
   }
-  if (process.env.DEMO_AUTO_SLOTS === '1' && process.env.APP_ENV !== 'production') {
-    console.log('▶ DEMO_AUTO_SLOTS=1: adding the missing demo slots (idempotent)');
-    run('npx', ['tsx', 'src/db/refresh-slots.ts'], { DATABASE_URL: direct });
+  if (process.env.DEMO_AUTO_SLOTS === '1') {
+    if (['demo', 'development'].includes(process.env.APP_ENV ?? '')) {
+      console.log('▶ DEMO_AUTO_SLOTS=1: adding the missing demo slots (idempotent)');
+      run('npx', ['tsx', 'src/db/refresh-slots.ts'], { DATABASE_URL: direct });
+    } else console.log(`▶ DEMO_AUTO_SLOTS=1 ignored: APP_ENV is "${process.env.APP_ENV ?? ''}" (only demo/development)`);
   }
-} else console.log('▶ database steps skipped (' + (touchDb ? 'no DATABASE_URL' : `VERCEL_ENV=${process.env.VERCEL_ENV}`) + ')');
+} else {
+  console.log('▶ database steps skipped (' + (touchDb ? 'no DATABASE_URL' : `VERCEL_ENV=${process.env.VERCEL_ENV}`) + ')');
+  if (process.env.DEMO_AUTO_SLOTS === '1') console.log('▶ note: DEMO_AUTO_SLOTS only runs in the Vercel Production environment (set the variable for Production too); the daily cron also applies it at runtime');
+}
 
 if (!process.argv.includes('--db-only')) run('npx', ['next', 'build']);

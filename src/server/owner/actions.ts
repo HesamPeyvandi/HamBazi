@@ -4,6 +4,7 @@ import { requireRole, requireUser } from '@/server/auth/rbac';
 import { DomainError } from '@/server/booking/errors';
 import { cancelReservationByVenue } from '@/server/booking/reservations';
 import { normalizeDigits } from '@/lib/i18n/digits';
+import { cancelBlock, createBlock, updateBlock, type BlockInput } from './blocks';
 import { addStaff, removeStaff, addVenueImage, becomeVenueManager, createSlots, createVenue, deleteSlot, removeVenueImage, reviewVenue, setSlotOpen, submitForReview, updateVenue } from './venues';
 
 const num = (v: FormDataEntryValue | null) => { const n = parseInt(normalizeDigits(String(v ?? '')).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : 0; };
@@ -99,4 +100,29 @@ export async function removeStaffAction(venueId: string, userId: string) {
   if (!UUID.test(venueId) || !UUID.test(userId)) redirect('/owner');
   await run(`/owner/venues/${venueId}`, () => removeStaff(u, venueId, userId));
   redirect(`/owner/venues/${venueId}?ok=staff_removed`);
+}
+
+/* ----- standing (weekly recurring) reservations ----- */
+function blockFromForm(fd: FormData): BlockInput {
+  const hm = (v: FormDataEntryValue | null) => { const [h, m] = normalizeDigits(String(v ?? '')).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+  const j = (p: string) => ({ jy: num(fd.get(`${p}y`)), jm: num(fd.get(`${p}m`)), jd: num(fd.get(`${p}d`)) });
+  return { title: String(fd.get('title') ?? ''), note: String(fd.get('note') ?? ''), weekday: Number(fd.get('weekday')), startMinute: hm(fd.get('start')), endMinute: hm(fd.get('end')), from: j('from'), to: j('to') };
+}
+export async function createBlockAction(venueId: string, fd: FormData) {
+  const u = await manager();
+  const back = `/owner/venues/${venueId}/blocks`;
+  const r = await run(back, () => createBlock(u, venueId, blockFromForm(fd)));
+  redirect(`${back}?ok=created&n=${r.closed}`);
+}
+export async function updateBlockAction(venueId: string, blockId: string, fd: FormData) {
+  const u = await manager();
+  const back = `/owner/venues/${venueId}/blocks`;
+  const r = await run(`${back}?edit=${blockId}`, () => updateBlock(u, blockId, blockFromForm(fd)));
+  redirect(`${back}?ok=updated&n=${r.closed}`);
+}
+export async function cancelBlockAction(venueId: string, blockId: string) {
+  const u = await manager();
+  const back = `/owner/venues/${venueId}/blocks`;
+  const r = await run(back, () => cancelBlock(u, blockId));
+  redirect(`${back}?ok=cancelled&n=${r.reopened}`);
 }

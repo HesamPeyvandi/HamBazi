@@ -1,5 +1,5 @@
 import {
-  type AnyPgColumn, pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric, bigint,
+  type AnyPgColumn, pgTable, pgEnum, uuid, text, integer, boolean, timestamp, jsonb, doublePrecision, numeric, bigint, date,
   uniqueIndex, index, primaryKey, check,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -141,6 +141,27 @@ export const venueSports = pgTable('venue_sports', {
   check('venue_sports_price_pos', sql`${t.pricePerSlot} > 0`),
 ]);
 
+/** Standing weekly reservation made by the owner (e.g. an organisation every Sunday 10-12 from date A to date B). Its slots are closed to the public. */
+export const recurringBlocks = pgTable('recurring_blocks', {
+  id: id(),
+  venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  note: text('note').notNull().default(''),
+  weekday: integer('weekday').notNull(), // 0 = Sunday … 6 = Saturday (Tehran time)
+  startMinute: integer('start_minute').notNull(), // minutes after local midnight
+  endMinute: integer('end_minute').notNull(),
+  fromDate: date('from_date').notNull(), // Gregorian date of the Tehran calendar day, inclusive
+  toDate: date('to_date').notNull(),
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+}, (t) => [
+  index('recurring_blocks_venue_idx').on(t.venueId, t.active),
+  check('recurring_blocks_weekday', sql`${t.weekday} BETWEEN 0 AND 6`),
+  check('recurring_blocks_minutes', sql`${t.startMinute} >= 0 AND ${t.endMinute} <= 1440 AND ${t.endMinute} > ${t.startMinute}`),
+  check('recurring_blocks_dates', sql`${t.toDate} >= ${t.fromDate}`),
+]);
+
 export const timeSlots = pgTable('time_slots', {
   id: id(),
   venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
@@ -150,6 +171,7 @@ export const timeSlots = pgTable('time_slots', {
   price: integer('price').notNull(),
   status: slotStatusEnum('status').notNull().default('open'),
   version: integer('version').notNull().default(0),
+  blockId: uuid('block_id').references(() => recurringBlocks.id, { onDelete: 'set null' }), // set when closed by a standing reservation
 }, (t) => [
   uniqueIndex('time_slots_unique_start').on(t.venueId, t.sportId, t.startsAt),
   index('time_slots_search_idx').on(t.status, t.startsAt),

@@ -91,6 +91,10 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 <td width="50%"><img src="docs/screenshots/10-owner-dashboard.jpg" alt="Owner dashboard"><br><sub><b>Owner dashboard</b> — revenue, bookings, occupancy, rating and a 7/30/90-day chart.</sub></td>
 <td width="50%"><img src="docs/screenshots/11-admin-settings.jpg" alt="Admin settings"><br><sub><b>Admin</b> — venue approval, versioned fee & cancellation policy, audit log.</sub></td>
 </tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/15-owner-slots.jpg" alt="Owner slot management"><br><sub><b>Owner: slots</b> — owners create their own slots (days, hours, price), open/close or delete them.</sub></td>
+<td width="50%"><img src="docs/screenshots/16-owner-recurring-blocks.jpg" alt="Standing weekly reservations"><br><sub><b>Owner: standing reservations</b> — an organisation books every Sunday 10–12 from date A to date B; those slots close to the public. Create, edit, cancel.</sub></td>
+</tr>
 </table>
 
 ### Mobile first

@@ -31,7 +31,7 @@ export default async function EditVenue({ params, searchParams }: { params: Prom
       {q.ok && OK[q.ok] && <p role="status" className="mt-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">{OK[q.ok]}</p>}
       {q.err && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
       <div className="mt-4 flex flex-wrap gap-2">
-        {v.status === 'published' && <><Link href={`/owner/venues/${v.id}/slots`} className="btn btn-primary btn-sm">مدیریت سانس‌ها</Link><Link href={`/venues/${v.slug}`} className="btn btn-outline btn-sm">مشاهدهٔ صفحهٔ عمومی</Link></>}
+        {v.status === 'published' && <><Link href={`/owner/venues/${v.id}/slots`} className="btn btn-primary btn-sm">مدیریت سانس‌ها</Link><Link href={`/owner/venues/${v.id}/blocks`} className="btn btn-outline btn-sm">رزروهای دائمی</Link><Link href={`/venues/${v.slug}`} className="btn btn-outline btn-sm">مشاهدهٔ صفحهٔ عمومی</Link></>}
         {d.isOwner && v.status === 'draft' && <form action={submitReviewAction.bind(null, v.id)}><SubmitButton className="btn btn-primary btn-sm">ارسال برای تأیید</SubmitButton></form>}
       </div>
       {!d.isOwner && <p className="mt-4 rounded-xl bg-page p-3 text-sm text-ink-500">شما کارمند این سالن هستید و فقط به سانس‌ها، رزروها و حضور و غیاب دسترسی دارید.</p>}

@@ -1,5 +1,6 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { db, schema } from './client';
+import { applyBlocks } from './blocks-sql';
 import { tehranParts, tehranWallToUtc } from '../lib/i18n/jalali';
 
 /** Same daily pattern as the demo seed (Tehran wall-clock). */
@@ -38,5 +39,6 @@ export async function extendDemoSlots(days = 14): Promise<number> {
     const res = await d.insert(schema.timeSlots).values(values.slice(i, i + 500)).onConflictDoNothing().returning({ id: schema.timeSlots.id });
     added += res.length;
   }
+  for (const venueId of byVenue.keys()) await applyBlocks(d, venueId); // keep standing reservations closed
   return added;
 }
