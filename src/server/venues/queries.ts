@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { db, schema } from '@/db/client';
+import { ensureSlotsFresh } from '@/server/venues/ensure-slots';
 import { jalaliToUtc, tehranParts, tehranWallToUtc } from '@/lib/i18n/jalali';
 
 export const PAGE_SIZE = 8;
@@ -85,6 +86,7 @@ export async function searchVenues(f: VenueFilters) {
 }
 
 export async function hydrate(ids: string[], f?: VenueFilters): Promise<VenueCard[]> {
+  await ensureSlotsFresh();
   if (!ids.length) return [];
   const d = db();
   const [venues, images, sportRows, facs, cities] = await Promise.all([
@@ -140,6 +142,7 @@ export async function getVenueBySlug(slug: string) {
 }
 
 export async function slotsForDay(venueId: string, day: { jy: number; jm: number; jd: number }) {
+  await ensureSlotsFresh(venueId); // schedule-generated slots stay topped up without anyone pressing a button
   const r = dayRange(day);
   return db().select().from(schema.timeSlots).where(and(eq(schema.timeSlots.venueId, venueId),
     gte(schema.timeSlots.startsAt, r.start), sql`${schema.timeSlots.startsAt} < ${r.end.toISOString()}::timestamptz`))

@@ -53,8 +53,8 @@ describe('standing weekly reservations', () => {
     const p = sun(); const next = tehranParts(tehranWallToUtc(p.y, p.m, p.d + 7, 12, 0));
     await createSlots(owner, venueId, { sportId, days: [{ y: next.y, m: next.m, d: next.d }], startHour: 9, startMin: 0, endHour: 14 });
     expect((await db().select().from(schema.timeSlots).where(eq(schema.timeSlots.startsAt, tehranWallToUtc(next.y, next.m, next.d, 10, 0))))[0].status).toBe('closed');
-    await extendDemoSlots(30);
-    const stillOpenInWindow = (await db().select().from(schema.timeSlots)).filter((s) => { const t = tehranParts(s.startsAt); return t.weekdayJs === 0 && (t.h === 10 || t.h === 11) && s.startsAt < tehranWallToUtc(p.y, p.m, p.d + 22, 0, 0) && s.status === 'open'; });
+    await extendDemoSlots();
+    const stillOpenInWindow = (await db().select().from(schema.timeSlots)).filter((s) => { const t = tehranParts(s.startsAt); return t.weekdayJs === 0 && (t.h === 10 || t.h === 11) && s.startsAt < tehranWallToUtc(p.y, p.m, p.d + 14, 0, 0) && s.status === 'open'; });
     expect(stillOpenInWindow).toEqual([]);
   });
   it('owner cannot manually reopen a block slot; others cannot manage the block', async () => {

@@ -4,7 +4,11 @@
 
 # HamBazi · هم‌بازی
 
-### Book a court. Split the bill. Find your team.
+### Automatic slots
+
+Slots are **not** created by hand day by day. Each owner sets a **weekly schedule** per sport (weekdays, opening hours, slot length: `/owner/venues/[id]/schedule`). The platform keeps the next 14 days generated: lazily when a venue/list page is viewed (throttled), in the daily cron (`/api/cron/sweep`), and immediately when the owner saves. Standing weekly reservations (`/blocks`) are excluded automatically. In **demo/development** (`APP_ENV` ≠ production) venues without a schedule get a default one (every day 16:00–23:30, 90 min), so the demo never runs dry; **production never invents availability**.
+
+## Book a court. Split the bill. Find your team.
 
 A **Persian-first (RTL)** booking and player-matching platform for **futsal** and **volleyball**, built for Iran —
 Jalali dates, Persian digits, integer toman, and OTP-by-SMS login.
@@ -94,6 +98,10 @@ Organising a weekly game usually means a group chat, a phone call to the venue, 
 <tr>
 <td width="50%"><img src="docs/screenshots/15-owner-slots.jpg" alt="Owner slot management"><br><sub><b>Owner: slots</b> — owners create their own slots (days, hours, price), open/close or delete them.</sub></td>
 <td width="50%"><img src="docs/screenshots/16-owner-recurring-blocks.jpg" alt="Standing weekly reservations"><br><sub><b>Owner: standing reservations</b> — an organisation books every Sunday 10–12 from date A to date B; those slots close to the public. Create, edit, cancel.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/17-owner-weekly-schedule.jpg" alt="Owner weekly schedule"><br><sub><b>Owner: weekly schedule</b> — set once which weekdays and hours the hall is open and how long a slot is; slots are generated automatically (14 days ahead, topped up daily).</sub></td>
+<td width="50%"></td>
 </tr>
 </table>
 
@@ -268,7 +276,7 @@ Copy `.env.example` to `.env`. Secrets must be ≥ 32 characters (`openssl rand 
 | `npm run dev` / `build` / `start` | Develop / build / run the production build |
 | `npm run db:migrate` | Apply SQL migrations |
 | `npm run db:seed` | Seed demo data (dev/demo only) |
-| `npm run db:slots [days]` | Demo only: add the missing slots for the next 14 days (idempotent, never deletes). The seed only creates 10 days, so a demo DB shows "no free slots" afterwards; set `DEMO_AUTO_SLOTS=1` (non-production `APP_ENV`) to do this automatically on each Vercel build and daily cron run |
+| `npm run db:slots` | Demo tool: gives venues without a weekly schedule the demo default and generates the next 14 days of slots (idempotent). Normally unnecessary — slots are generated automatically (see below) |
 | `npm run db:reset` | Drop and recreate the dev schema |
 | `npm run db:generate` | Generate a migration from `src/db/schema.ts` |
 | `npm test` | Vitest (needs `hambazi_test`, or set `DATABASE_URL_TEST`) |

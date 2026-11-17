@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { sqlClient } from './client';
 import { extendDemoSlots } from './demo-slots';
 
-const days = Math.min(60, Math.max(1, Number(process.argv[2]) || 14));
-const added = await extendDemoSlots(days);
+const days = 14;
+const added = await extendDemoSlots();
 console.log(`demo slots: ${added} added for the next ${days} days (existing slots untouched)`);
 await sqlClient().end();

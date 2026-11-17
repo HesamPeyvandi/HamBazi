@@ -4,6 +4,7 @@ import { requireRole, requireUser } from '@/server/auth/rbac';
 import { DomainError } from '@/server/booking/errors';
 import { cancelReservationByVenue } from '@/server/booking/reservations';
 import { normalizeDigits } from '@/lib/i18n/digits';
+import { saveSchedule } from './schedule';
 import { cancelBlock, createBlock, updateBlock, type BlockInput } from './blocks';
 import { addStaff, removeStaff, addVenueImage, becomeVenueManager, createSlots, createVenue, deleteSlot, removeVenueImage, reviewVenue, setSlotOpen, submitForReview, updateVenue } from './venues';
 
@@ -125,4 +126,14 @@ export async function cancelBlockAction(venueId: string, blockId: string) {
   const back = `/owner/venues/${venueId}/blocks`;
   const r = await run(back, () => cancelBlock(u, blockId));
   redirect(`${back}?ok=cancelled&n=${r.reopened}`);
+}
+
+/* ----- weekly schedule (auto-generated slots) ----- */
+export async function saveScheduleAction(venueId: string, sportId: string, fd: FormData) {
+  const u = await manager();
+  const back = `/owner/venues/${venueId}/schedule?sport=${sportId}`;
+  const hm = (v: FormDataEntryValue | null) => { const [h, m] = normalizeDigits(String(v ?? '')).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+  const input = { slotMinutes: num(fd.get('slotMinutes')), days: Array.from({ length: 7 }, (_, w) => ({ weekday: w, enabled: fd.get(`on${w}`) === 'on', open: hm(fd.get(`open${w}`)), close: hm(fd.get(`close${w}`)) })) };
+  const r = await run(back, () => saveSchedule(u, venueId, sportId, input));
+  redirect(`${back}&ok=saved&n=${r.created}`);
 }

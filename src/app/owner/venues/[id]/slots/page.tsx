@@ -26,12 +26,12 @@ export default async function SlotsPage({ params, searchParams }: { params: Prom
   return (
     <div className="container-page max-w-3xl py-8">
       <nav className="mb-3 text-sm text-ink-500"><Link href={`/owner/venues/${id}`}>{d.venue.name}</Link> › سانس‌ها</nav>
-      <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-2xl font-extrabold">مدیریت سانس‌ها</h1><Link href={`/owner/venues/${id}/blocks`} className="btn btn-outline btn-sm">رزروهای دائمی</Link></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-2xl font-extrabold">مدیریت سانس‌ها</h1><div className="flex gap-2"><Link href={`/owner/venues/${id}/schedule`} className="btn btn-primary btn-sm">برنامهٔ هفتگی</Link><Link href={`/owner/venues/${id}/blocks`} className="btn btn-outline btn-sm">رزروهای دائمی</Link></div></div>
       {d.venue.status !== 'published' ? <p className="card mt-4 p-5">سانس‌ها پس از تأیید سالن قابل ایجاد هستند.</p> : (<>
         {q.ok && <p role="status" className="mt-3 rounded-xl bg-brand-50 p-3 text-sm font-semibold text-brand-700">{toFa(q.ok)} سانس ایجاد شد{q.skipped && q.skipped !== '0' ? ` (${toFa(q.skipped)} مورد تکراری/همپوشان یا گذشته نادیده گرفته شد)` : ''}.</p>}
         {q.err && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{q.err}</p>}
         <form action={createSlotsAction.bind(null, id)} className="card mt-5 space-y-4 p-6">
-          <h2 className="section-title">ایجاد سانس</h2>
+          <h2 className="section-title">ایجاد سانس مقطعی (دستی)</h2><p className="text-sm text-ink-500">سانس‌های معمول از «برنامهٔ هفتگی» خودکار ساخته می‌شوند؛ این فرم فقط برای سانس‌های یک‌باره است.</p>
           <div className="grid gap-3 sm:grid-cols-4">
             <div><label className="label" htmlFor="sportId">ورزش</label><select id="sportId" name="sportId" className="field">{mine.map((s) => <option key={s.sportId} value={s.sportId}>{s.name} — {toFa(s.slotMinutes)} دقیقه</option>)}</select></div>
             <div><label className="label" htmlFor="start">شروع از</label><select id="start" name="start" defaultValue="17:00" className="field">{Array.from({ length: 16 }, (_, i) => i + 8).map((h) => <option key={h} value={`${h}:00`}>{toFa(String(h).padStart(2, '0'))}:۰۰</option>)}</select></div>

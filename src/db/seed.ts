@@ -6,7 +6,7 @@ import 'dotenv/config';
 import { sql } from 'drizzle-orm';
 import { db, schema, sqlClient } from './client';
 import { parseAppEnv } from '../server/env';
-import { tehranParts, tehranWallToUtc } from '../lib/i18n/jalali';
+import { ensureDemoSchedule, generateSlots } from './slot-generator';
 
 if (parseAppEnv(process.env.APP_ENV) === 'production') {
   console.error('Refusing to seed: APP_ENV is production (or unset).');
@@ -105,21 +105,9 @@ async function main() {
     await d.execute(sql`UPDATE venues SET rating_avg = (SELECT round(avg(rating)::numeric, 2) FROM venue_reviews WHERE venue_id = ${row.id}),
       rating_count = (SELECT count(*) FROM venue_reviews WHERE venue_id = ${row.id}) WHERE id = ${row.id}`);
 
-    // time slots for the next 10 days (Tehran wall-clock), 90 minutes each
-    const t0 = tehranParts(new Date());
-    const starts = [[16, 0], [17, 30], [19, 0], [20, 30], [22, 0]];
-    const slots = [];
-    for (let day = 0; day < 10; day++) {
-      const base = new Date(Date.UTC(t0.y, t0.m - 1, t0.d + day));
-      for (const [i, [h, m]] of starts.entries()) {
-        const startsAt = tehranWallToUtc(base.getUTCFullYear(), base.getUTCMonth() + 1, base.getUTCDate(), h, m);
-        if (startsAt.getTime() < Date.now()) continue;
-        const sport = v.sports[(i + day) % v.sports.length];
-        slots.push({ venueId: row.id, sportId: sportId[sport], startsAt, endsAt: new Date(startsAt.getTime() + 90 * 60000),
-          price: v.price + (h >= 19 ? 30000 : 0) });
-      }
-    }
-    await d.insert(schema.timeSlots).values(slots);
+    // weekly schedule (demo default) → slots are generated for the next 14 days and topped up automatically afterwards
+    await ensureDemoSchedule(d, row.id);
+    await generateSlots(d, row.id);
   }
   console.log('seeded:', VENUES.length, 'venues,', users.length, 'users');
   console.log('demo logins (OTP is shown on screen):');

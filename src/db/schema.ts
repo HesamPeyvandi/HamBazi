@@ -92,6 +92,7 @@ export const venues = pgTable('venues', {
   ownerUserId: uuid('owner_user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   cityId: uuid('city_id').notNull().references(() => cities.id),
   slug: text('slug').notNull().unique(),
+  scheduleSet: boolean('schedule_set').notNull().default(false), // true once a weekly schedule exists (owner-saved or demo default)
   name: text('name').notNull(),
   description: text('description').notNull().default(''),
   address: text('address').notNull(),
@@ -141,6 +142,22 @@ export const venueSports = pgTable('venue_sports', {
   check('venue_sports_price_pos', sql`${t.pricePerSlot} > 0`),
 ]);
 
+/** Weekly opening hours per sport: the owner sets them once; slots are generated automatically for a rolling window. */
+export const venueSchedules = pgTable('venue_schedules', {
+  id: id(),
+  venueId: uuid('venue_id').notNull().references(() => venues.id, { onDelete: 'cascade' }),
+  sportId: uuid('sport_id').notNull().references(() => sports.id, { onDelete: 'cascade' }),
+  weekday: integer('weekday').notNull(), // 0 = Sunday … 6 = Saturday (Tehran time)
+  openMinute: integer('open_minute').notNull(),
+  closeMinute: integer('close_minute').notNull(),
+  slotMinutes: integer('slot_minutes').notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex('venue_schedules_unique').on(t.venueId, t.sportId, t.weekday),
+  check('venue_schedules_weekday', sql`${t.weekday} BETWEEN 0 AND 6`),
+  check('venue_schedules_range', sql`${t.openMinute} >= 0 AND ${t.closeMinute} <= 1440 AND ${t.closeMinute} - ${t.openMinute} >= ${t.slotMinutes} AND ${t.slotMinutes} BETWEEN 15 AND 480`),
+]);
+
 /** Standing weekly reservation made by the owner (e.g. an organisation every Sunday 10-12 from date A to date B). Its slots are closed to the public. */
 export const recurringBlocks = pgTable('recurring_blocks', {
   id: id(),
@@ -171,6 +188,7 @@ export const timeSlots = pgTable('time_slots', {
   price: integer('price').notNull(),
   status: slotStatusEnum('status').notNull().default('open'),
   version: integer('version').notNull().default(0),
+  auto: boolean('auto').notNull().default(false), // generated from the weekly schedule (vs. one-off slot made by hand)
   blockId: uuid('block_id').references(() => recurringBlocks.id, { onDelete: 'set null' }), // set when closed by a standing reservation
 }, (t) => [
   uniqueIndex('time_slots_unique_start').on(t.venueId, t.sportId, t.startsAt),

@@ -29,6 +29,7 @@ Status: **Phase 5 complete** (automatic split payment, teams & matching, English
 | [21-phase12-handoff](21-phase12-handoff.md) | تحویل فاز ۱۲: تصاویر AVIF/WebP، حذف درخواست‌های تکراری، debounce جستجو |
 | [22-phase12b-handoff](22-phase12b-handoff.md) | فاز ۱۲-۲: ارزیابی ۹ پیشنهاد بهینه‌سازی؛ حذف پکیج‌های بلااستفاده، سقف زمان، کش آیکون‌ها |\n| [FONT](FONT.md) | How to replace the brand font |
 | [23-phase12c-handoff](23-phase12c-handoff.md) | رفع «سانس خالی ثبت نشده» (`db:slots`)، رزرو دائمی هفتگی مالک، تراز دکمه‌های ادمین |
+| [24-phase14-handoff](24-phase14-handoff.md) | برنامهٔ هفتگی مالک + تولید خودکار سانس‌ها (پایان «سانس خالی ثبت نشده است») |
 | [ASSETS](ASSETS.md) | Files we still need from you (photos, fonts) |
 
 `iran-reachability-test/` is a tiny static page for checking Vercel reachability from Iran.
