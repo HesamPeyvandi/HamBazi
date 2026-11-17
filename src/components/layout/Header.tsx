@@ -25,6 +25,7 @@ export async function Header() {
               <HeaderIconLink href="/chat" label="گفت‌وگوها" count={unreadChat}><MessageCircle className="h-5 w-5" aria-hidden /></HeaderIconLink>
               <HeaderIconLink href="/notifications" label="اعلان‌ها" count={unread}><Bell className="h-5 w-5" aria-hidden /></HeaderIconLink>
               <Link href="/owner" className="hidden rounded-full px-3 py-1.5 text-sm text-white/85 hover:bg-white/10 md:block">{user.role === 'player' ? 'سالن دارید؟' : 'پنل مالک'}</Link>
+              {user.role === 'admin' && <Link href="/admin" className="hidden rounded-full px-3 py-1.5 text-sm text-white/85 hover:bg-white/10 md:block">پنل ادمین</Link>}
               <Link href="/profile" aria-label="پروفایل من" className="rounded-full ring-2 ring-white/20"><Avatar seed={user.id} src={user.avatarUrl} name={user.displayName || 'کاربر'} size={36} /></Link>
             </>
           ) : (

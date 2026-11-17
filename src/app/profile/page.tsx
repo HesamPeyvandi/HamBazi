@@ -1,6 +1,6 @@
 import { timesLabel } from '@/lib/play-times';
 import Link from 'next/link';
-import { Pencil, LogOut, MapPin, Clock, ShieldCheck, Gauge } from 'lucide-react';
+import { Pencil, LogOut, MapPin, Clock, ShieldCheck, Gauge, Building2, Shield } from 'lucide-react';
 import { requireUser } from '@/server/auth/rbac';
 import { getProfileData } from '@/server/profile';
 import { getPublicProfile } from '@/server/trust/profile';
@@ -46,6 +46,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             <p className="text-2xl font-extrabold">{toFa(stats?.reliability.score ?? 100)}</p></div>
         </div>
       </section>
+
+      {(user.role === 'venue_manager' || user.role === 'admin') && (
+        <nav aria-label="پنل‌های مدیریتی" className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Link href="/owner" className="btn btn-primary justify-center gap-2"><Building2 className="h-5 w-5" aria-hidden />ورود به پنل مالک</Link>
+          {user.role === 'admin' && <Link href="/admin" className="btn btn-outline justify-center gap-2"><Shield className="h-5 w-5" aria-hidden />ورود به پنل ادمین</Link>}
+        </nav>
+      )}
 
       {skills.map((s) => (
         <section key={s.sportKey} className="card mt-5 p-6" aria-labelledby={`sk-${s.sportKey}`}>

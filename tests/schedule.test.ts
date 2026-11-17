@@ -55,6 +55,7 @@ describe('owner weekly schedule', () => {
     expect(await generateSlots(db(), venueId, 14)).toBeGreaterThanOrEqual(4); // a "new day" re-creates the missing ones
   });
   it('standing reservations stay closed and unselectable, including for newly generated slots', async () => {
+    await db().delete(schema.timeSlots).where(eq(schema.timeSlots.status, 'booked')); // the booked slot from the earlier test could sit inside the block window (a block correctly refuses that)
     await saveSchedule(owner, venueId, futsal, { slotMinutes: 60, days: week([0], 600, 840) });
     const p = tehranParts(new Date()); const j = toJalali(new Date());
     const to = toJalali(tehranWallToUtc(p.y, p.m, p.d + 60, 12, 0));
